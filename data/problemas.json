@@ -1,0 +1,88 @@
+{
+  "problemas": [
+    {
+      "id": 1,
+      "filtro": [
+        "FWA"
+      ],
+      "nome": "Internet lenta",
+      "externo": true,
+      "aguardar": true,
+      "lembrete": true,
+      "etiquetaInterna": "INTERNET_LENTA",
+      "etiquetaExterna": "Problema de internet reportado",
+      "mensagem": "reportou problemas com velocidade de internet. Técnico será enviado."
+    },
+    {
+      "id": 2,
+      "filtro": [
+        "ONU",
+        "Roteador",
+        "Conecta+",
+        "Roteador 1"
+      ],
+      "nome": "Fatura incorreta",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": true,
+      "etiquetaInterna": "FATURA_INCORRETA",
+      "etiquetaExterna": "",
+      "mensagem": "relatou problema com fatura. Correção solicitada."
+    },
+    {
+      "id": 3,
+      "filtro": [
+        "STB",
+        "Recptor"
+      ],
+      "nome": "Erro de NTP",
+      "externo": true,
+      "aguardar": true,
+      "lembrete": false,
+      "etiquetaInterna": "SINAL_TV",
+      "etiquetaExterna": "Problema de sinal de TV reportado",
+      "mensagem": "está sem sinal de TV. Técnico agendado."
+    },
+    {
+      "id": 4,
+      "filtro": [
+        "Telefone"
+      ],
+      "nome": "Telefone sem linha",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "DUVIDA_SERVICO",
+      "etiquetaExterna": "",
+      "mensagem": "tem dúvidas sobre serviços. Informações prestadas."
+    },
+    {
+      "id": 5,
+      "filtro": [
+        "ONU",
+        "Roteador",
+        "Conecta+",
+        "Roteador 1",
+        "Geral"
+      ],
+      "nome": "Equipamento com defeito",
+      "externo": true,
+      "aguardar": true,
+      "lembrete": true,
+      "etiquetaInterna": "EQUIP_DEFEITO",
+      "etiquetaExterna": "Equipamento com defeito reportado",
+      "mensagem": "reportou equipamento com defeito. Substituição agendada."
+    }
+  ],
+  "grausParentesco": [
+    "Cônjuge",
+    "Filho(a)",
+    "Pai/Mãe",
+    "Irmão/Irmã",
+    "Neto/Neta",
+    "Avô/Avó",
+    "Representante legal",
+    "Funcionário/Funcionária",
+    "Animgo/Amiga"
+  ]
+}
