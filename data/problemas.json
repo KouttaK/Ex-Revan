@@ -2,9 +2,7 @@
   "problemas": [
     {
       "id": 1,
-      "filtro": [
-        "FWA"
-      ],
+      "filtro": ["FWA"],
       "nome": "Internet lenta",
       "externo": true,
       "aguardar": true,
@@ -15,12 +13,7 @@
     },
     {
       "id": 2,
-      "filtro": [
-        "ONU",
-        "Roteador",
-        "Conecta+",
-        "Roteador 1"
-      ],
+      "filtro": ["ONU", "Roteador", "Conecta+", "Roteador 1"],
       "nome": "Fatura incorreta",
       "externo": false,
       "aguardar": false,
@@ -31,10 +24,7 @@
     },
     {
       "id": 3,
-      "filtro": [
-        "STB",
-        "Recptor"
-      ],
+      "filtro": ["STB", "Recptor"],
       "nome": "Erro de NTP",
       "externo": true,
       "aguardar": true,
@@ -45,9 +35,7 @@
     },
     {
       "id": 4,
-      "filtro": [
-        "Telefone"
-      ],
+      "filtro": ["Telefone"],
       "nome": "Telefone sem linha",
       "externo": false,
       "aguardar": false,
@@ -58,13 +46,7 @@
     },
     {
       "id": 5,
-      "filtro": [
-        "ONU",
-        "Roteador",
-        "Conecta+",
-        "Roteador 1",
-        "Geral"
-      ],
+      "filtro": ["ONU", "Roteador", "Conecta+", "Roteador 1", "Geral"],
       "nome": "Equipamento com defeito",
       "externo": true,
       "aguardar": true,
@@ -80,7 +62,11 @@
     "Pai/Mãe",
     "Irmão/Irmã",
     "Neto/Neta",
+    "Genro/Nora",
+    "Sobrinho/Sobrinha",
     "Avô/Avó",
+    "Cunhado/Cunhada",
+    "padrasto/Madrasta",
     "Representante legal",
     "Funcionário/Funcionária",
     "Animgo/Amiga"
