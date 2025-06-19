@@ -104,7 +104,7 @@
       "filtro": ["FTTH"],
       "nome": "Sem gêrencia - Externo",
       "externo": true,
-      "aguardar": true,
+      "aguardar": false,
       "lembrete": false,
       "etiquetaInterna": "Sem acesso TP-LINK",
       "etiquetaExterna": "Sem acesso TP-LINK",
@@ -126,10 +126,10 @@
       "filtro": ["FTTH"],
       "nome": "Sem acesso - Externo",
       "externo": true,
-      "aguardar": true,
+      "aguardar": false,
       "lembrete": false,
       "etiquetaInterna": "Sem acesso",
-      "etiquetaExterna": "",
+      "etiquetaExterna": "Sem acesso",
       "mensagem": " fez contato relatando a falta de acesso. Após confirmar os dados com o cliente, perguntei se ele conseguia se conectar à rede Wi-Fi. Nesse sentido, constatou-se que ele consegue se conectar, mas recebe a mensagem 'sem conexão'. Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que continua sem acesso, desta forma foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
     },
     {
@@ -142,6 +142,28 @@
       "etiquetaInterna": "Sem acesso",
       "etiquetaExterna": "",
       "mensagem": "relata que está sem acesso à internet. Verificamos que a rede Wi-Fi do cliente não conecta, com a mensagem de erro de autenticação. A falha na autenticação pode ter sido causada por uma senha incorreta ou por um problema no roteador. Geramos uma nova senha para o cliente e o acesso foi normalizado."
+    },
+    {
+      "id": 14,
+      "filtro": ["FTTH"],
+      "nome": "Sinal irregular - Externo",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Sinal da fibra do cliente irregular - FTTH",
+      "etiquetaExterna": "Sinal Irregular Fibra",
+      "mensagem": " fez contato relatando a falta de acesso. Após confirmar os dados com o cliente, perguntei se ele conseguia se conectar à rede Wi-Fi. Nesse sentido, constatou-se que ele consegue se conectar, mas recebe a mensagem 'sem conexão'. Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que continua sem acesso, desta forma foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 15,
+      "filtro": ["FTTH"],
+      "nome": "Rota com sinal irregular",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Sinal da fibra do cliente irregular - FTTH",
+      "etiquetaExterna": "Sinal Irregular Fibra",
+      "mensagem": " fez contato relatando a falta de acesso. Após confirmar os dados com o cliente, perguntei se ele conseguia se conectar à rede Wi-Fi. Nesse sentido, constatou-se que ele consegue se conectar, mas recebe a mensagem 'sem conexão'. Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que continua sem acesso, desta forma foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
     }
   ],
   "grausParentesco": [
