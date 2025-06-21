@@ -161,9 +161,130 @@
       "externo": false,
       "aguardar": false,
       "lembrete": false,
-      "etiquetaInterna": "Sinal da fibra do cliente irregular - FTTH",
-      "etiquetaExterna": "Sinal Irregular Fibra",
-      "mensagem": " fez contato relatando a falta de acesso. Após confirmar os dados com o cliente, perguntei se ele conseguia se conectar à rede Wi-Fi. Nesse sentido, constatou-se que ele consegue se conectar, mas recebe a mensagem 'sem conexão'. Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que continua sem acesso, desta forma foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
+      "etiquetaInterna": "Rota com sinal irregular - FTTH",
+      "etiquetaExterna": "",
+      "mensagem": " relata interrupção do serviço de acesso à internet. Após análise, constatou-se anomalia no sinal da PON. A rota foi verificada e apresenta falhas. O cliente foi informado sobre o prazo de 24 horas para a resolução do problema, que está relacionado à rota."
+    },
+    {
+      "id": 16,
+      "filtro": ["FTTH"],
+      "nome": "Rede sumiu - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Sem acesso",
+      "etiquetaExterna": "",
+      "mensagem": "relatou que estava sem conexão com a internet e que o nome da rede Wi-Fi não estava aparecendo. Após realizar algumas alterações na configuração da rede, a conexão foi restabelecida com o nome e senha originais. O usuário confirmou que a internet voltou a funcionar corretamente."
+    },
+    {
+      "id": 17,
+      "filtro": ["FTTH"],
+      "nome": "Rede sumiu - Externo",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Sem acesso",
+      "etiquetaExterna": "Sem acesso",
+      "mensagem": "relatou que estava sem conexão com a internet e que o nome da rede Wi-Fi não estava aparecendo. Após realizar algumas alterações na configuração da rede, a conexão foi restabelecida com o nome e senha originais. O usuário confirmou que a rede continua sem aparecer nos seus dispositivos, dessa forma, será encaminhado uma equipe ao local."
+    },
+    {
+      "id": 18,
+      "filtro": ["FTTH"],
+      "nome": "Ping alto em jogos na rede cabeada - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Ping alto",
+      "etiquetaExterna": "",
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência foi reduzida para 60 ms, ficando dentro da garantia da brisanet."
+    },
+    {
+      "id": 19,
+      "filtro": ["FTTH"],
+      "nome": "Ping alto em jogos na rede cabeada - externo",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Ping alto",
+      "etiquetaExterna": "Perda de pacotes",
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência continua superior a 80ms. Dessa forma, será aberto uma O.S. para analisar no local se há algum problema em nossa rede."
+    },
+    {
+      "id": 20,
+      "filtro": ["FTTH"],
+      "nome": "ping alto em jogos na rede cabeada - Ficou testando",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Ping alto",
+      "etiquetaExterna": "",
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência foi reduzida para 60 ms, ficando dentro da garantia da brisanet. O cliente foi instruído a monitorar o desempenho ao longo do dia e a entrar em contato novamente se o problema persistir, para que uma equipe técnica especializada possa ser enviada."
+    },
+    {
+      "id": 21,
+      "filtro": ["FTTH"],
+      "nome": "Ping alto em jogos na rede cabeada - Recorrente",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Ping alto",
+      "etiquetaExterna": "Perda de pacotes",
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, eu menciono a intenção de atualizar a rede, no entanto, o cliente destaca que essa questão é recorrente e deseja que uma equipe externa conduza uma análise, uma vez que já havia contatado previamente sem sucesso. Diante da insatisfação do cliente e da constatação de que se trata de uma situação frequente ainda não atendida localmente, uma Ordem de Serviço (O.S.) vai ser aberta para resolver o problema e garantir a retenção do cliente. Agendado de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 22,
+      "filtro": ["FTTH"],
+      "nome": "Ping alto em jogos na rede cabeada - Remoto",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": true,
+      "etiquetaInterna": "Ping alto",
+      "etiquetaExterna": "",
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar [nome do jogo], mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência continua superior a 80ms. Dessa forma, foi acessado remotamente o computador do cliente para realização de teste mais detalhados. Imagens do teste em anexo. Cliente ciente que foi aberto chamado para o nosso setor de NOC analisar em até 24 horas úteis. Contato para retorno: [contato]"
+    },
+    {
+      "id": 23,
+      "filtro": ["FTTH", "FWA"],
+      "nome": "Alteração de senha aleatória - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Alteração de Senha do WIFI",
+      "etiquetaExterna": "",
+      "mensagem": "solicitou a alteração da senha da rede Wi-Fi. Foi explicado que a senha é gerada aleatoriamente e composta por caracteres minúsculos. Senha gerada e cliente com acesso"
+    },
+    {
+      "id": 24,
+      "filtro": ["FTTH", "FWA"],
+      "nome": "Alteração de senha personalizada - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Alteração de Senha do WIFI",
+      "etiquetaExterna": "",
+      "mensagem": "solicitou a alteração da senha da rede Wi-Fi. Foi explicado que a senha pode ser personalizada, mas deve ser composta por caracteres minúsculos, minuculas, caractere especial e números. Cliente ciente e com acesso a nova senha"
+    },
+    {
+      "id": 25,
+      "filtro": ["FTTH", "FWA"],
+      "nome": "Alteração de senha - Inativo",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Desconexão chat",
+      "etiquetaExterna": "",
+      "mensagem": "solicitou a alteração da senha da rede Wi-Fi. Foi explicado sobre as formas de alterar a  senha, porém, o cliente ficou sem interagir até o encerramento do atendimento."
+    },
+    {
+      "id": 26,
+      "filtro": ["FTTH"],
+      "nome": "Plano no cabo - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Plano não chega o contratado - FTTH",
+      "etiquetaExterna": "",
+      "mensagem": "informou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede cabeada. Verificado o sinal óptico na sua PON está dentro dos padrões. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Além disso, verificamos a placa de rede é Gigabyte e o cabo de rede é CAT. 5E. Após essas verificações, realizamos um teste adicional no velocímetro, e agora a velocidade atingiu o contratado."
     }
   ],
   "grausParentesco": [

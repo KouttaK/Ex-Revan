@@ -18,19 +18,21 @@ function iniciarInterface() {
     .then(data => {
       dadosProblemas = data.problemas;
       grausParentesco = data.grausParentesco;
+      // Disponibiliza os dados globalmente para o script de automação
+      window.dadosProblemas = dadosProblemas;
       criarInterfaceCompleta();
     })
     .catch(error => {
       console.error("Erro ao carregar dados:", error);
-      // Exibir mensagem de erro para o usuário de forma mais amigável seria ideal aqui
-      const body = document.querySelector('body');
+      const body = document.querySelector("body");
       if (body) {
-        body.innerHTML = '<p style="color: red; text-align: center; margin-top: 50px;">Erro ao carregar dados da aplicação. Verifique o console para mais detalhes.</p>';
+        body.innerHTML =
+          '<p style="color: red; text-align: center; margin-top: 50px;">Erro ao carregar dados da aplicação. Verifique o console para mais detalhes.</p>';
       }
     });
 }
 
-// Função principal para iniciar a interface
+// Função principal para criar a interface
 function criarInterfaceCompleta() {
   const overlay = document.createElement("div");
   overlay.id = "sidebar-overlay";
@@ -38,63 +40,58 @@ function criarInterfaceCompleta() {
 
   const container = document.createElement("div");
   container.id = "interface-atendimento";
-  container.className = "atendimento-container sidebar"; 
+  container.className = "atendimento-container sidebar";
 
-  // Header
   const header = document.createElement("div");
   header.className = "atendimento-header";
   header.innerHTML = `<h2>Máscara de atendimento</h2>`;
   container.appendChild(header);
 
-  // Nova área para a barra de pesquisa
   const searchAreaWrapper = document.createElement("div");
   searchAreaWrapper.id = "search-area-wrapper";
-  
+
   const autocompleteContainer = document.createElement("div");
   autocompleteContainer.className = "autocomplete-container";
 
   const problemaInput = document.createElement("input");
   problemaInput.type = "text";
   problemaInput.id = "problema-cliente";
-  problemaInput.placeholder = "Desconexão Chat - Internet"; 
-  
+  problemaInput.placeholder = "Desconexão Chat - Internet";
+
   const autocompleteList = document.createElement("div");
   autocompleteList.id = "autocomplete-lista";
-  autocompleteList.className = "autocomplete-lista oculto"; 
+  autocompleteList.className = "autocomplete-lista oculto";
 
   autocompleteContainer.appendChild(problemaInput);
   autocompleteContainer.appendChild(autocompleteList);
   searchAreaWrapper.appendChild(autocompleteContainer);
   container.appendChild(searchAreaWrapper);
 
-
-  // Formulário principal
   const mainForm = document.createElement("div");
   mainForm.className = "atendimento-form";
-  
-  const secaoIdentificacao = criarSecaoIdentificacao(); 
+
+  const secaoIdentificacao = criarSecaoIdentificacao();
   mainForm.appendChild(secaoIdentificacao);
-  
-  const secaoOpcoesProblema = criarSecaoOpcoesProblema(); 
+
+  const secaoOpcoesProblema = criarSecaoOpcoesProblema();
   mainForm.appendChild(secaoOpcoesProblema);
 
-  const secaoPreviewWrapper = document.createElement("div"); 
-  secaoPreviewWrapper.className = "atendimento-secao preview-wrapper"; 
-  const secaoPreview = criarSecaoPreview(); 
+  const secaoPreviewWrapper = document.createElement("div");
+  secaoPreviewWrapper.className = "atendimento-secao preview-wrapper";
+  const secaoPreview = criarSecaoPreview();
   secaoPreviewWrapper.appendChild(secaoPreview);
   mainForm.appendChild(secaoPreviewWrapper);
 
   container.appendChild(mainForm);
 
-  // Botões de Ação
   const botoesAcaoDiv = document.createElement("div");
   botoesAcaoDiv.className = "atendimento-botoes";
-  
+
   const btnFecharInferior = document.createElement("button");
-  btnFecharInferior.id = "btn-fechar-sidebar-inferior"; 
+  btnFecharInferior.id = "btn-fechar-sidebar-inferior";
   btnFecharInferior.type = "button";
   btnFecharInferior.setAttribute("aria-label", "Fechar interface");
-  btnFecharInferior.innerHTML = "✕"; 
+  btnFecharInferior.innerHTML = "✕";
   botoesAcaoDiv.appendChild(btnFecharInferior);
 
   const botoesDireitaContainer = document.createElement("div");
@@ -106,7 +103,6 @@ function criarInterfaceCompleta() {
   botoesAcaoDiv.appendChild(botoesDireitaContainer);
   container.appendChild(botoesAcaoDiv);
 
-  // Footer MODIFICADO
   const footer = document.createElement("div");
   footer.className = "atendimento-footer";
   footer.innerHTML = `
@@ -119,19 +115,17 @@ function criarInterfaceCompleta() {
 
   const sidebarTrigger = document.createElement("div");
   sidebarTrigger.id = "sidebar-trigger";
-  sidebarTrigger.textContent = "Ajuda"; 
+  sidebarTrigger.textContent = "Ajuda";
   document.body.appendChild(sidebarTrigger);
 
-  configurarEventos(); 
-  configurarSidebarToggle(); 
+  configurarEventos();
+  configurarSidebarToggle();
 }
 
-// Função para criar a seção de opções do problema MODIFICADA
 function criarSecaoOpcoesProblema() {
   const secao = document.createElement("div");
-  secao.className = "atendimento-secao"; 
-  secao.id = "secao-opcoes-problema"; 
-  // Adicionado título e nova checkbox "Comentar como importante"
+  secao.className = "atendimento-secao";
+  secao.id = "secao-opcoes-problema";
   secao.innerHTML = `
     <h3 class="opcoes-problema-titulo">Configurações de Envio</h3>
     <div id="opcoes-adicionais-problema">
@@ -154,72 +148,57 @@ function criarSecaoOpcoesProblema() {
     </div>
   `;
   const opcoesAdicionais = secao.querySelector("#opcoes-adicionais-problema");
-  if(opcoesAdicionais) opcoesAdicionais.classList.add("oculto"); 
-  
+  if (opcoesAdicionais) opcoesAdicionais.classList.add("oculto");
+
   return secao;
 }
 
-
-// Função para configurar o toggle do sidebar
 function configurarSidebarToggle() {
   const container = document.getElementById("interface-atendimento");
   const trigger = document.getElementById("sidebar-trigger");
-  const closeBtnInferior = document.getElementById("btn-fechar-sidebar-inferior"); 
+  const closeBtnInferior = document.getElementById(
+    "btn-fechar-sidebar-inferior"
+  );
   const overlay = document.getElementById("sidebar-overlay");
 
   function abrirSidebar() {
     isSidebarAberto = true;
     document.body.classList.add("sidebar-aberta");
-    if(container) container.classList.add("aberto");
-    if(trigger) trigger.classList.add("oculto"); 
-    if(overlay) {
-        overlay.offsetHeight; 
-        overlay.classList.add("visivel");
+    if (container) container.classList.add("aberto");
+    if (trigger) trigger.classList.add("oculto");
+    if (overlay) {
+      overlay.offsetHeight;
+      overlay.classList.add("visivel");
     }
   }
 
   function fecharSidebar() {
     isSidebarAberto = false;
     document.body.classList.remove("sidebar-aberta");
-    if(container) container.classList.remove("aberto");
-    if(trigger) trigger.classList.remove("oculto"); 
-    if(overlay) overlay.classList.remove("visivel");
+    if (container) container.classList.remove("aberto");
+    if (trigger) trigger.classList.remove("oculto");
+    if (overlay) overlay.classList.remove("visivel");
   }
 
-  if (trigger) {
-    trigger.addEventListener("click", function (e) {
-        e.stopPropagation(); 
-        if (!isSidebarAberto) {
-        abrirSidebar();
-        }
+  if (trigger)
+    trigger.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!isSidebarAberto) abrirSidebar();
     });
-  }
-
-  if (closeBtnInferior) {
-    closeBtnInferior.addEventListener("click", function (e) {
-        e.stopPropagation();
-        if (isSidebarAberto) {
-        fecharSidebar();
-        }
+  if (closeBtnInferior)
+    closeBtnInferior.addEventListener("click", e => {
+      e.stopPropagation();
+      if (isSidebarAberto) fecharSidebar();
     });
-  }
-  
-  if (overlay) {
-    overlay.addEventListener("click", function() {
-        if (isSidebarAberto) {
-        fecharSidebar();
-        }
+  if (overlay)
+    overlay.addEventListener("click", () => {
+      if (isSidebarAberto) fecharSidebar();
     });
-  }
-
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && isSidebarAberto) {
-      fecharSidebar();
-    }
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && isSidebarAberto) fecharSidebar();
   });
 }
 
-// Função para criar a seção de identificação do cliente com seletor segmentado
 function criarSecaoIdentificacao() {
   const secao = document.createElement("div");
   secao.className = "atendimento-secao";
@@ -231,13 +210,11 @@ function criarSecaoIdentificacao() {
             <div class="titular-selector-option" data-titular="false">Não</div>
         </div>
     </div>
-    
     <div id="campos-nao-titular" class="campos-adicionais oculto">
         <div class="atendimento-campo">
             <label for="nome-cliente">Primeiro Nome do Contato:</label>
             <input type="text" id="nome-cliente" placeholder="Digite o primeiro nome" class="entrada-texto">
         </div>
-        
         <div class="atendimento-campo">
             <label for="parentesco-cliente">Grau de Parentesco com o Titular:</label>
             <select id="parentesco-cliente" class="entrada-select">
@@ -249,10 +226,9 @@ function criarSecaoIdentificacao() {
   return secao;
 }
 
-// Função para criar a seção de pré-visualização
 function criarSecaoPreview() {
   const conteudoPreview = document.createElement("div");
-  conteudoPreview.id = "secao-preview-content"; 
+  conteudoPreview.id = "secao-preview-content";
   conteudoPreview.innerHTML = `
     <h3 style="display: block; font-size: 16px; font-weight: 600; color: #000C3E; border-bottom: 1px solid var(--cor-linha-divisoria); padding-bottom: 8px; ">Pré-visualização da Mensagem</h3>
     <div class="preview-container oculto" id="preview-container">
@@ -266,7 +242,6 @@ function criarSecaoPreview() {
                 <span class="etiqueta-valor"></span>
             </div>
         </div>
-        
         <div class="preview-mensagem" style="margin-top: 15px;">
             <label for="mensagem-final" style="font-weight: 500; font-size: 0.9rem; color: var(--cor-texto-label); display:block; margin-bottom: 5px;">Mensagem base:</label>
             <textarea id="mensagem-final" class="entrada-textarea" rows="4" readonly></textarea>
@@ -279,298 +254,245 @@ function criarSecaoPreview() {
   return conteudoPreview;
 }
 
-// Função para configurar os eventos da interface
+// *** FUNÇÃO DE EVENTOS MODIFICADA ***
 function configurarEventos() {
   const parentescoSelect = document.getElementById("parentesco-cliente");
-  if (parentescoSelect) {
-    preencherSelectParentesco(parentescoSelect);
-  }
-
   const titularOptions = document.querySelectorAll(".titular-selector-option");
   const camposNaoTitular = document.getElementById("campos-nao-titular");
+  const nomeInput = document.getElementById("nome-cliente");
+  const problemaInput = document.getElementById("problema-cliente");
+  const autocompleteList = document.getElementById("autocomplete-lista");
+  const btnEditar = document.getElementById("btn-editar");
+  const btnEnviar = document.getElementById("btn-enviar");
+  const mensagemTextarea = document.getElementById("mensagem-final");
+
+  if (parentescoSelect) preencherSelectParentesco(parentescoSelect);
 
   titularOptions.forEach(option => {
-    option.addEventListener("click", function() {
+    option.addEventListener("click", function () {
       titularOptions.forEach(opt => opt.classList.remove("active"));
       this.classList.add("active");
       isTitular = this.getAttribute("data-titular") === "true";
-
-      if (camposNaoTitular) {
-        camposNaoTitular.classList.toggle("oculto", isTitular);
-      }
+      camposNaoTitular.classList.toggle("oculto", isTitular);
       if (isTitular) {
         nomeCliente = "";
         parentesco = "";
-        const nomeInput = document.getElementById("nome-cliente");
         if (nomeInput) nomeInput.value = "";
         if (parentescoSelect) parentescoSelect.value = "";
       }
       atualizarPreview();
     });
   });
-  if (camposNaoTitular && isTitular) {
-    camposNaoTitular.classList.add("oculto");
-  }
 
-
-  const nomeInput = document.getElementById("nome-cliente");
-  if (nomeInput) {
+  if (nomeInput)
     nomeInput.addEventListener("input", function () {
       nomeCliente = this.value.trim();
       atualizarPreview();
     });
-  }
 
-  if (parentescoSelect) {
+  if (parentescoSelect)
     parentescoSelect.addEventListener("change", function () {
       parentesco = this.value;
       atualizarPreview();
     });
-  }
-
-  const problemaInput = document.getElementById("problema-cliente");
-  const autocompleteList = document.getElementById("autocomplete-lista");
 
   if (problemaInput && autocompleteList) {
-    problemaInput.addEventListener("input", function () {
-      const termo = this.value.toLowerCase();
+    const handleAutocomplete = () => {
+      const termo = problemaInput.value.toLowerCase();
       const resultados = buscarProblemas(termo);
       exibirResultadosAutocomplete(resultados, autocompleteList, problemaInput);
-    });
-
-    problemaInput.addEventListener("focus", function () {
-      const termo = this.value.toLowerCase();
-      const resultados = buscarProblemas(termo); 
-      exibirResultadosAutocomplete(resultados, autocompleteList, problemaInput);
-    });
-
-    document.addEventListener("click", function (event) {
+    };
+    problemaInput.addEventListener("input", handleAutocomplete);
+    problemaInput.addEventListener("focus", handleAutocomplete);
+    document.addEventListener("click", event => {
       if (
-        problemaInput && !problemaInput.contains(event.target) &&
-        autocompleteList && !autocompleteList.contains(event.target)
+        !problemaInput.contains(event.target) &&
+        !autocompleteList.contains(event.target)
       ) {
         autocompleteList.classList.add("oculto");
       }
     });
   }
-  
-  const btnEditar = document.getElementById("btn-editar");
-  const btnEnviar = document.getElementById("btn-enviar"); 
 
-  if (btnEditar && btnEnviar) { 
+  if (btnEditar) {
     btnEditar.addEventListener("click", function () {
-      const mensagemTextarea = document.getElementById("mensagem-final");
       if (!mensagemTextarea) return;
-      
       if (mensagemTextarea.readOnly) {
-        const problema = dadosProblemas.find(p => p.id === problemaId);
-        let prefixo = isTitular ? "Titular" : (nomeCliente && parentesco ? `${nomeCliente} (${parentesco})` : (nomeCliente ? nomeCliente : (parentesco ? `Contato (${parentesco})` : "Contato")));
-        let mensagemBaseEditavel = problema ? problema.mensagem : ""; 
-        
-        if (problema) {
-            if (problema.externo) {
-                const aguardarChamado = document.getElementById("aguardar-chamado")?.checked;
-                if (aguardarChamado === false && problema.mensagemSemAguardar) { 
-                    mensagemBaseEditavel = problema.mensagemSemAguardar;
-                } else if (aguardarChamado === true && problema.mensagemComAguardar) {
-                    mensagemBaseEditavel = problema.mensagemComAguardar;
-                }
-            } else { 
-                const usarLembrete = document.getElementById("usar-lembrete")?.checked;
-                if (usarLembrete === true && problema.mensagemComLembrete) {
-                    mensagemBaseEditavel = problema.mensagemComLembrete;
-                } else if (usarLembrete === false && problema.mensagemSemLembrete) {
-                    mensagemBaseEditavel = problema.mensagemSemLembrete || problema.mensagem;
-                }
-            }
-        }
-
-        mensagemTextarea.value = `${prefixo} ${mensagemBaseEditavel}`;
         mensagemTextarea.readOnly = false;
         mensagemTextarea.focus();
-        mensagemTextarea.select();
         btnEditar.textContent = "Salvar";
-        btnEditar.classList.remove("btn-secundario");
-        btnEditar.classList.add("btn-primario"); 
-        btnEnviar.disabled = true; 
+        btnEditar.classList.replace("btn-secundario", "btn-primario");
+        if (btnEnviar) btnEnviar.disabled = true;
       } else {
-        mensagemFinal = mensagemTextarea.value; 
+        mensagemFinal = mensagemTextarea.value;
+        window.mensagemFinal = mensagemFinal; // Atualiza global
         mensagemTextarea.readOnly = true;
         btnEditar.textContent = "Editar";
-        btnEditar.classList.remove("btn-primario");
-        btnEditar.classList.add("btn-secundario");
-        btnEnviar.disabled = false; 
+        btnEditar.classList.replace("btn-primario", "btn-secundario");
+        if (btnEnviar) btnEnviar.disabled = !problemaId;
       }
     });
   }
 
+  // Listener de envio modificado para chamar a automação
   if (btnEnviar) {
-    btnEnviar.addEventListener("click", function () {
+    btnEnviar.addEventListener("click", async function () {
       if (!problemaId) {
-        console.warn("Por favor, selecione um problema para continuar.");
         const previewVazio = document.getElementById("preview-vazio");
-        const problemaInputEl = document.getElementById("problema-cliente");
-        if(previewVazio) {
-            previewVazio.innerHTML = '<p style="color: #dc3545; font-weight: bold;">Selecione um problema!</p>';
-            if (problemaInputEl) problemaInputEl.focus();
-            setTimeout(() => {
-                 if(previewVazio) previewVazio.innerHTML = '<p>Preencha os campos para gerar a mensagem.</p>';
-            }, 3000);
+        if (previewVazio) {
+          previewVazio.innerHTML =
+            '<p style="color: #dc3545; font-weight: bold;">Selecione um problema!</p>';
+          problemaInput?.focus();
+          setTimeout(() => {
+            if (previewVazio)
+              previewVazio.innerHTML =
+                "<p>Preencha os campos para gerar a mensagem.</p>";
+          }, 3000);
         }
         return;
       }
 
-      const mensagemTextarea = document.getElementById("mensagem-final");
-      let mensagemParaEnvio = "";
-
-      if (mensagemTextarea && !mensagemTextarea.readOnly) { 
-          mensagemParaEnvio = mensagemTextarea.value;
-          mensagemTextarea.readOnly = true; 
-          if(btnEditar) { 
-            btnEditar.textContent = "Editar";
-            btnEditar.classList.remove("btn-primario");
-            btnEditar.classList.add("btn-secundario");
-          }
-      } else {
-          atualizarPreview(); 
-          mensagemParaEnvio = mensagemFinal; 
+      // Garante que a mensagem mais recente seja usada, mesmo sem clicar em 'Salvar'
+      if (!mensagemTextarea.readOnly) {
+        mensagemFinal = mensagemTextarea.value;
+        window.mensagemFinal = mensagemFinal;
       }
-      
-      const problemaSelecionado = dadosProblemas.find(p => p.id === problemaId);
-      const comentarImportanteCheckbox = document.getElementById("comentar-importante"); // Get new checkbox state
-      const dadosEnvio = {
-        isTitular,
-        nomeCliente: nomeCliente || (isTitular ? "Titular" : ""),
-        parentesco: parentesco || (isTitular ? "" : "Não informado"),
-        problemaId,
-        problemaNome: problemaSelecionado?.nome || "Não encontrado",
-        mensagemFinal: mensagemParaEnvio, 
-        etiquetaInterna: problemaSelecionado?.etiquetaInterna || "",
-        etiquetaExterna: problemaSelecionado?.etiquetaExterna || "",
-        comentarImportante: comentarImportanteCheckbox ? comentarImportanteCheckbox.checked : false // Add new checkbox state
-      };
 
-      console.log("Dados para envio:", dadosEnvio);
-      
-      const btnEnviarOriginalText = btnEnviar.textContent;
-      btnEnviar.textContent = "Enviando...";
-      btnEnviar.disabled = true;
+      const btnOriginalText = this.textContent;
+      this.textContent = "Enviando...";
+      this.disabled = true;
+      if (btnEditar) btnEditar.disabled = true;
 
-      setTimeout(() => {
-        if (mensagemTextarea) {
-            mensagemTextarea.value = "Mensagem enviada com sucesso!"; 
-            mensagemTextarea.style.borderColor = "var(--cor-sucesso)"; 
+      // *** INÍCIO DA INTEGRAÇÃO COM A AUTOMAÇÃO ***
+      if (typeof CallAutomation !== "undefined") {
+        const automation = new CallAutomation();
+        const success = await automation.execute();
+
+        if (success) {
+          this.textContent = "Enviado!";
+          this.classList.add("btn-enviado");
+          setTimeout(resetarInterface, 2500);
+        } else {
+          this.textContent = "Falhou!";
+          this.classList.remove("btn-enviado");
+          setTimeout(() => {
+            this.textContent = btnOriginalText;
+            this.disabled = false;
+            if (btnEditar) btnEditar.disabled = false;
+          }, 3000);
         }
-
-        btnEnviar.textContent = "Enviado!";
-        btnEnviar.classList.add("btn-enviado"); 
-
+      } else {
+        console.error(
+          "Classe 'CallAutomation' não encontrada. Verifique se o script 'automation.js' está carregado."
+        );
+        this.textContent = "Erro!";
         setTimeout(() => {
-          const problemaInputEl = document.getElementById("problema-cliente");
-          if (problemaInputEl) problemaInputEl.value = "";
-          problemaId = null;
-          
-          const simOption = document.querySelector(".titular-selector-option[data-titular='true']");
-          const naoOption = document.querySelector(".titular-selector-option[data-titular='false']");
-          if (simOption && naoOption) {
-              simOption.classList.add("active");
-              naoOption.classList.remove("active");
-              isTitular = true;
-              if (camposNaoTitular) camposNaoTitular.classList.add("oculto");
-              const nomeInputEl = document.getElementById("nome-cliente");
-              if (nomeInputEl) nomeInputEl.value = "";
-              if (parentescoSelect) parentescoSelect.value = "";
-          }
-           if (comentarImportanteCheckbox) comentarImportanteCheckbox.checked = false; // Reset new checkbox
-          
-          if (mensagemTextarea) {
-            mensagemTextarea.style.borderColor = "var(--cor-borda-input)"; 
-          }
-          btnEnviar.textContent = btnEnviarOriginalText;
-          btnEnviar.disabled = false; 
-          btnEnviar.classList.remove("btn-enviado"); 
-          
-          if (btnEditar && mensagemTextarea) { 
-              mensagemTextarea.readOnly = true;
-              btnEditar.textContent = "Editar";
-              btnEditar.classList.remove("btn-primario");
-              btnEditar.classList.add("btn-secundario");
-          }
-           atualizarPreview(); 
-        }, 2500);
-      }, 1000);
+          this.textContent = btnOriginalText;
+          this.disabled = false;
+          if (btnEditar) btnEditar.disabled = false;
+        }, 3000);
+      }
+      // *** FIM DA INTEGRAÇÃO ***
     });
   }
 
-    const aguardarChamadoCheckbox = document.getElementById('aguardar-chamado');
-    if (aguardarChamadoCheckbox) {
-        aguardarChamadoCheckbox.addEventListener('change', atualizarPreview);
-    }
+  document
+    .getElementById("aguardar-chamado")
+    ?.addEventListener("change", atualizarPreview);
+  document
+    .getElementById("usar-lembrete")
+    ?.addEventListener("change", atualizarPreview);
+}
 
-    const usarLembreteCheckbox = document.getElementById('usar-lembrete');
-    if (usarLembreteCheckbox) {
-        usarLembreteCheckbox.addEventListener('change', atualizarPreview);
-    }
-    // Note: The new "comentar-importante" checkbox does not call atualizarPreview on change by default.
-    // If its state needs to affect the preview message, an event listener should be added for it as well.
+function resetarInterface() {
+  problemaId = null;
+  window.problemaId = null;
+  isTitular = true;
+  nomeCliente = "";
+  parentesco = "";
+
+  const problemaInputEl = document.getElementById("problema-cliente");
+  if (problemaInputEl) problemaInputEl.value = "";
+
+  document
+    .querySelector(".titular-selector-option[data-titular='true']")
+    ?.classList.add("active");
+  document
+    .querySelector(".titular-selector-option[data-titular='false']")
+    ?.classList.remove("active");
+  document.getElementById("campos-nao-titular")?.classList.add("oculto");
+  const nomeInputEl = document.getElementById("nome-cliente");
+  if (nomeInputEl) nomeInputEl.value = "";
+  const parentescoSelectEl = document.getElementById("parentesco-cliente");
+  if (parentescoSelectEl) parentescoSelectEl.value = "";
+
+  const importanteCheckbox = document.getElementById("comentar-importante");
+  if (importanteCheckbox) importanteCheckbox.checked = false;
+
+  const btnEnviar = document.getElementById("btn-enviar");
+  if (btnEnviar) {
+    btnEnviar.textContent = "Enviar";
+    btnEnviar.disabled = false;
+    btnEnviar.classList.remove("btn-enviado");
+  }
+
+  const btnEditar = document.getElementById("btn-editar");
+  const mensagemTextarea = document.getElementById("mensagem-final");
+  if (btnEditar && mensagemTextarea) {
+    mensagemTextarea.readOnly = true;
+    btnEditar.textContent = "Editar";
+    btnEditar.classList.replace("btn-primario", "btn-secundario");
+    btnEditar.disabled = false;
+  }
+
+  atualizarPreview();
 }
 
 function preencherSelectParentesco(selectElement) {
-  if (!grausParentesco || !grausParentesco.length || !selectElement) return;
-  let optionsHTML = '<option value="">Selecione o parentesco</option>';
-  grausParentesco.forEach(grau => {
-    const trimmedGrau = grau.trim();
-    optionsHTML += `<option value="${trimmedGrau}">${trimmedGrau}</option>`;
-  });
-  selectElement.innerHTML = optionsHTML;
+  if (!grausParentesco || !selectElement) return;
+  selectElement.innerHTML =
+    '<option value="">Selecione o parentesco</option>' +
+    grausParentesco
+      .map(grau => `<option value="${grau.trim()}">${grau.trim()}</option>`)
+      .join("");
 }
 
 function buscarProblemas(termo) {
-  if (!dadosProblemas || !dadosProblemas.length) return [];
+  if (!dadosProblemas) return [];
+  if (!termo) return dadosProblemas;
   const termoLower = termo.toLowerCase();
-  if (!termoLower) return dadosProblemas; 
-
-  return dadosProblemas.filter(problema => {
-    if (problema.nome.toLowerCase().includes(termoLower)) return true;
-    if (
-      problema.filtro &&
-      problema.filtro.some(f => f.toLowerCase().includes(termoLower))
-    )
-      return true;
-    return false;
-  });
+  return dadosProblemas.filter(
+    p =>
+      p.nome.toLowerCase().includes(termoLower) ||
+      p.filtro?.some(f => f.toLowerCase().includes(termoLower))
+  );
 }
 
 function exibirResultadosAutocomplete(resultados, listContainer, inputElement) {
   if (!listContainer || !inputElement) return;
 
-  if (!resultados.length && inputElement.value) { 
-    listContainer.innerHTML = `<div class="autocomplete-item" style="color: var(--cor-texto-secundario); cursor: default;">Nenhum resultado encontrado</div>`;
-    listContainer.classList.remove("oculto");
+  if (!resultados.length) {
+    listContainer.innerHTML = `<div class="autocomplete-item" style="cursor: default;">Nenhum resultado</div>`;
+    listContainer.classList.toggle("oculto", !inputElement.value);
     return;
   }
-  if (!resultados.length && !inputElement.value) { 
-     listContainer.classList.add("oculto");
-     return;
-  }
 
-  let html = "";
-  resultados.forEach(problema => {
-    html += `<div class="autocomplete-item" data-id="${problema.id}">${problema.nome}</div>`;
-  });
-
-  listContainer.innerHTML = html;
+  listContainer.innerHTML = resultados
+    .map(
+      p => `<div class="autocomplete-item" data-id="${p.id}">${p.nome}</div>`
+    )
+    .join("");
   listContainer.classList.remove("oculto");
 
-  const items = listContainer.querySelectorAll(".autocomplete-item[data-id]"); 
-  items.forEach(item => {
-    item.addEventListener("click", function () {
-      const id = parseInt(this.getAttribute("data-id"), 10);
-      selecionarProblema(id);
-      listContainer.classList.add("oculto");
-      if(inputElement) inputElement.focus(); 
+  listContainer
+    .querySelectorAll(".autocomplete-item[data-id]")
+    .forEach(item => {
+      item.addEventListener("click", function () {
+        selecionarProblema(parseInt(this.getAttribute("data-id"), 10));
+        listContainer.classList.add("oculto");
+        inputElement.focus();
+      });
     });
-  });
 }
 
 function selecionarProblema(id) {
@@ -578,32 +500,30 @@ function selecionarProblema(id) {
   if (!problema) return;
 
   problemaId = id;
-  const problemaInput = document.getElementById("problema-cliente");
-  if (problemaInput) problemaInput.value = problema.nome;
+  window.problemaId = id; // Atualiza variável global para automação
+  document.getElementById("problema-cliente").value = problema.nome;
 
   const opcoesExterno = document.getElementById("opcoes-externo");
   const opcoesInterno = document.getElementById("opcoes-interno");
-  const aguardarChamadoCheckbox = document.getElementById("aguardar-chamado");
-  const usarLembreteCheckbox = document.getElementById("usar-lembrete");
-  const secaoOpcoesAdicionais = document.getElementById("opcoes-adicionais-problema"); 
+  const secaoOpcoesAdicionais = document.getElementById(
+    "opcoes-adicionais-problema"
+  );
 
-  if (opcoesExterno) opcoesExterno.classList.add("oculto");
-  if (opcoesInterno) opcoesInterno.classList.add("oculto");
-  
-  // Control visibility of the entire #opcoes-adicionais-problema block
-  if (problema.externo !== undefined || problema.interno !== undefined || problema.lembrete !== undefined || problema.aguardar !== undefined) { 
-      if (secaoOpcoesAdicionais) secaoOpcoesAdicionais.classList.remove("oculto");
+  const hasOptions =
+    problema.externo !== undefined || problema.lembrete !== undefined;
+  secaoOpcoesAdicionais.classList.toggle("oculto", !hasOptions);
 
-      if (problema.externo) { 
-        if (opcoesExterno) opcoesExterno.classList.remove("oculto");
-        if (aguardarChamadoCheckbox) aguardarChamadoCheckbox.checked = problema.aguardar !== undefined ? problema.aguardar : true; 
-      } else { 
-        if (opcoesInterno) opcoesInterno.classList.remove("oculto");
-        if (usarLembreteCheckbox) usarLembreteCheckbox.checked = problema.lembrete !== undefined ? problema.lembrete : true; 
-      }
-  } else {
-      // If no specific options, hide the whole additional options block
-      if (secaoOpcoesAdicionais) secaoOpcoesAdicionais.classList.add("oculto");
+  if (hasOptions) {
+    opcoesExterno.classList.toggle("oculto", !problema.externo);
+    opcoesInterno.classList.toggle("oculto", problema.externo);
+
+    if (problema.externo) {
+      document.getElementById("aguardar-chamado").checked =
+        problema.aguardar ?? true;
+    } else {
+      document.getElementById("usar-lembrete").checked =
+        problema.lembrete ?? true;
+    }
   }
   atualizarPreview();
 }
@@ -612,101 +532,75 @@ function atualizarPreview() {
   const previewContainer = document.getElementById("preview-container");
   const previewVazio = document.getElementById("preview-vazio");
   const mensagemTextarea = document.getElementById("mensagem-final");
-
-  if (!previewContainer || !previewVazio || !mensagemTextarea) return;
-
-  const secaoOpcoesAdicionais = document.getElementById("opcoes-adicionais-problema"); // Get the container
+  const btnEnviar = document.getElementById("btn-enviar");
+  const btnEditar = document.getElementById("btn-editar");
 
   if (!problemaId) {
     previewContainer.classList.add("oculto");
-    if(previewVazio) {
-        previewVazio.classList.remove("oculto");
-        previewVazio.innerHTML = '<p>Preencha os campos para gerar a mensagem.</p>'; 
-    }
+    previewVazio.classList.remove("oculto");
     mensagemTextarea.value = "";
-    const etiquetaInternaEl = document.getElementById("etiqueta-interna");
-    if (etiquetaInternaEl) {
-        const valorEl = etiquetaInternaEl.querySelector(".etiqueta-valor");
-        if (valorEl) valorEl.textContent = "";
-    }
-    const etiquetaExternaEl = document.getElementById("etiqueta-externa");
-    if (etiquetaExternaEl) {
-        const valorEl = etiquetaExternaEl.querySelector(".etiqueta-valor");
-        if (valorEl) valorEl.textContent = "";
-        etiquetaExternaEl.classList.add("oculto");
-    }
-    if (secaoOpcoesAdicionais) secaoOpcoesAdicionais.classList.add("oculto"); // Hide if no problem
+    if (btnEnviar) btnEnviar.disabled = true;
+    if (btnEditar) btnEditar.disabled = true;
+    document
+      .getElementById("opcoes-adicionais-problema")
+      .classList.add("oculto");
     return;
   }
 
+  if (btnEnviar) btnEnviar.disabled = false;
+  if (btnEditar) btnEditar.disabled = false;
   previewContainer.classList.remove("oculto");
-  if(previewVazio) previewVazio.classList.add("oculto");
+  previewVazio.classList.add("oculto");
 
-  const problema = dadosProblemas.find(p => p.id === problemaId); 
-  if (!problema) return; 
+  const problema = dadosProblemas.find(p => p.id === problemaId);
+  if (!problema) return;
 
-  // Show #opcoes-adicionais-problema if a problem is selected and has options
-  if (problema.externo !== undefined || problema.interno !== undefined || problema.lembrete !== undefined || problema.aguardar !== undefined) {
-      if(secaoOpcoesAdicionais) secaoOpcoesAdicionais.classList.remove("oculto");
-  } else {
-      if(secaoOpcoesAdicionais) secaoOpcoesAdicionais.classList.add("oculto");
-  }
-
-
-  const etiquetaInternaEl = document.getElementById("etiqueta-interna");
-  if (etiquetaInternaEl) {
-      const valorEl = etiquetaInternaEl.querySelector(".etiqueta-valor");
-      if (valorEl) valorEl.textContent = problema.etiquetaInterna || "N/A";
-  }
+  // Atualiza etiquetas
+  const etiquetaInternaEl = document
+    .getElementById("etiqueta-interna")
+    .querySelector(".etiqueta-valor");
+  etiquetaInternaEl.textContent = problema.etiquetaInterna || "N/A";
 
   const etiquetaExternaEl = document.getElementById("etiqueta-externa");
-  if (etiquetaExternaEl) {
-    if (problema.externo && problema.etiquetaExterna) {
-      etiquetaExternaEl.classList.remove("oculto");
-      const valorEl = etiquetaExternaEl.querySelector(".etiqueta-valor");
-      if(valorEl) valorEl.textContent = problema.etiquetaExterna;
-    } else {
-      etiquetaExternaEl.classList.add("oculto");
-    }
+  if (problema.externo && problema.etiquetaExterna) {
+    etiquetaExternaEl.querySelector(".etiqueta-valor").textContent =
+      problema.etiquetaExterna;
+    etiquetaExternaEl.classList.remove("oculto");
+  } else {
+    etiquetaExternaEl.classList.add("oculto");
   }
 
-  let prefixo = "Titular";
-  if (!isTitular) {
-    if (nomeCliente && parentesco) {
-      prefixo = `${nomeCliente} (${parentesco})`;
-    } else if (nomeCliente) {
-      prefixo = nomeCliente;
-    } else if (parentesco) {
-        prefixo = `Contato (${parentesco})`; 
-    }
-     else {
-      prefixo = "Contato"; 
-    }
-  }
+  // Define prefixo
+  let prefixo = isTitular
+    ? "Titular"
+    : nomeCliente && parentesco
+    ? `${nomeCliente} (${parentesco})`
+    : nomeCliente || `Contato (${parentesco || "Não inf."})`;
 
-  let mensagemBase = problema.mensagem || ""; 
-
+  // Define mensagem base
+  let mensagemBase = problema.mensagem || "";
   if (problema.externo) {
-    const aguardarChamado = document.getElementById("aguardar-chamado")?.checked;
-    if (aguardarChamado === false && problema.mensagemSemAguardar) { 
-        mensagemBase = problema.mensagemSemAguardar;
-    } else if (aguardarChamado === true && problema.mensagemComAguardar) {
-        mensagemBase = problema.mensagemComAguardar;
-    } 
-  } else { 
+    const aguardarChamado =
+      document.getElementById("aguardar-chamado")?.checked;
+    if (aguardarChamado === false && problema.mensagemSemAguardar)
+      mensagemBase = problema.mensagemSemAguardar;
+    else if (aguardarChamado === true && problema.mensagemComAguardar)
+      mensagemBase = problema.mensagemComAguardar;
+  } else {
     const usarLembrete = document.getElementById("usar-lembrete")?.checked;
-    if (usarLembrete === true && problema.mensagemComLembrete) {
-        mensagemBase = problema.mensagemComLembrete;
-    } else if (usarLembrete === false && problema.mensagemSemLembrete) {
-        mensagemBase = problema.mensagemSemLembrete;
-    } 
+    if (usarLembrete && problema.mensagemComLembrete)
+      mensagemBase = problema.mensagemComLembrete;
+    else if (!usarLembrete && problema.mensagemSemLembrete)
+      mensagemBase = problema.mensagemSemLembrete;
   }
 
-  mensagemFinal = `${prefixo} ${mensagemBase}`; 
-  
+  mensagemFinal = `${prefixo} ${mensagemBase}`;
+  window.mensagemFinal = mensagemFinal; // Atualiza global para automação
+
   if (mensagemTextarea.readOnly) {
     mensagemTextarea.value = mensagemFinal;
   }
 }
 
+// Inicia a aplicação
 iniciarInterface();
