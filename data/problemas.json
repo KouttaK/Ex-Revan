@@ -381,9 +381,9 @@
       "externo": true,
       "aguardar": false,
       "lembrete": false,
-      "etiquetaInterna": "Suspeita de  LOS",
-      "etiquetaExterna": "Suspeita de  LOS",
-      "mensagem": "relatou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede sem fio. Verificamos que o sinal óptico de sua PON estava dentro dos padrões. Nesse contexto, explicamos sobre a garantia de entrega de velocidade apenas na rede cabeada e oferecemos um procedimento remoto para tentar melhorar, embora não pudéssemos garantir o mesmo desempenho na rede sem fio. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do aparelho usado para testar. Apesar dessas verificações, o teste no velocímetro ainda indicou uma velocidade inferior à garantida. Diante dessa situação, o cliente ficou de realizar o teste no cabo quando puder."
+      "etiquetaInterna": "Suspeita de LOS",
+      "etiquetaExterna": "Suspeita de LOS",
+      "mensagem": "relatou a falta de acesso e a presença de um LED vermelho piscando. Ao questionar a possibilidade de incidentes ou remoção de equipamentos, o cliente negou qualquer ocorrência. Após constatar a normalidade da rota, foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
     },
     {
       "id": 34,
@@ -392,8 +392,8 @@
       "externo": true,
       "aguardar": true,
       "lembrete": false,
-      "etiquetaInterna": "Suspeita de  LOS",
-      "etiquetaExterna": "Suspeita de  LOS",
+      "etiquetaInterna": "Suspeita de LOS",
+      "etiquetaExterna": "Suspeita de LOS",
       "mensagem": "informou problemas de acesso e a presença de um LED vermelho piscando. Após confirmação, uma Ordem de Serviço foi gerada para realizar uma inspeção no local. O cliente está ciente da taxa de R$20,00, com a possibilidade de cobranças adicionais em caso de reparos. Agendado de acordo com a disponibilidade do cliente."
     },
     {
@@ -406,6 +406,61 @@
       "etiquetaInterna": "Rota Inoperante - FTTH",
       "etiquetaExterna": "",
       "mensagem": "fez contato para relatar a ausência de acesso. Foi explicado a ele que, naquele momento, a falta de acesso se deve a um rompimento de cabo de fibra que impactou toda a sua rota. Foi fornecido o prazo estimado pela URA para a regularização da situação. O cliente foi informado e está ciente dos detalhes."
+    },
+    {
+      "id": 36,
+      "filtro": ["FTTH", "FWA"],
+      "nome": "Desconto de sem acesso",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Solicitação de dados",
+      "etiquetaExterna": "",
+      "mensagem": "entra em contato para solicitar desconto referente ao tempo que ficou sem acesso. Foi repassado que o desconto é fornecido somente pelo nosso setor financeiro, que pode ser contractado por ligação no número 0800 281 3017."
+    },
+    {
+      "id": 37,
+      "filtro": ["FTTH"],
+      "nome": "OLT em manutenção",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Problema na OLT",
+      "etiquetaExterna": "",
+      "mensagem": "entrou em contato relatando falta de internet. Foi informado que há uma manutenção em andamento na OLT que afeta o sinal do cliente e de vários outros clientes. Foi repassado o prazo máximo de normalização conforme a URA, porém o serviço pode voltar a qualquer momento. Cliente foi orientado a entrar em contato com o setor financeiro para solicitar desconto referente ao tempo sem acesso após a normalização. Cliente ciente e de acordo."
+    },
+    {
+      "id": 38,
+      "filtro": ["FTTH"],
+      "nome": "PON piscando - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Pon piscando - FTTH",
+      "etiquetaExterna": "",
+      "mensagem": "relata que está enfrentando uma interrupção na sua conexão com a internet. Após indagar sobre a situação do LED PON, o cliente confirma que ele está piscando. Ao constatar que a rota está operante, foram executados os procedimentos padrões conforme documentados nos registros de eventos. Após a execução dessas ações, a conectividade foi restabelecida com êxito."
+    },
+    {
+      "id": 39,
+      "filtro": ["FTTH"],
+      "nome": "PON piscando - Externo",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Pon piscando - FTTH",
+      "etiquetaExterna": "PON Piscando",
+      "mensagem": "relata que está enfrentando uma interrupção na sua conexão com a internet. Após questionar sobre a situação do LED PON, o cliente confirma que ele está piscando. Ao constatar que a rota está operante, foram executados os procedimentos padrões conforme documentados nos registros de eventos. O cliente informou que o acesso continua interrompido, desta forma foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local.  Agendado de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 40,
+      "filtro": ["FTTH"],
+      "nome": "PON piscando - GPON",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": true,
+      "etiquetaInterna": "Pon piscando - FTTH",
+      "etiquetaExterna": "",
+      "mensagem": "entra em contato informando que está sem acesso, verificado que a LED PON está piscando, dessa forma foi reconfigurado a ONU e o problema persistiu. Foi tentado mais uma vez e o problema ainda persiste. O problema foi repassado pela liderança para o GPON verificar. Prazo de 24 horas. Cliente ciente do retorno."
     }
   ],
   "grausParentesco": [
