@@ -457,10 +457,76 @@
       "nome": "PON piscando - GPON",
       "externo": false,
       "aguardar": false,
-      "lembrete": true,
+      "lembrete": false,
       "etiquetaInterna": "Pon piscando - FTTH",
       "etiquetaExterna": "",
       "mensagem": "entra em contato informando que está sem acesso, verificado que a LED PON está piscando, dessa forma foi reconfigurado a ONU e o problema persistiu. Foi tentado mais uma vez e o problema ainda persiste. O problema foi repassado pela liderança para o GPON verificar. Prazo de 24 horas. Cliente ciente do retorno."
+    },
+    {
+      "id": 41,
+      "filtro": ["FTTH"],
+      "nome": "PON piscando - Resolvido",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Pon apagada - FTTH",
+      "etiquetaExterna": "",
+      "mensagem": "entrou em contato informando que os serviços da Brisanet estão sem sinal. Ao ser questionado sobre a ativação da LED PON e a ocorrência de acidentes ou remoção de equipamento, o cliente negou qualquer incidente. Após verificar que a rota está normal, procedeu-se à reconfiguração e reinicialização do modem ONU, além de conectá-lo em outra tomada de energia. O cliente reportou que o acesso foi normalizado. "
+    },
+    {
+      "id": 42,
+      "filtro": ["FTTH"],
+      "nome": "PON piscando - Externo",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Pon apagada - FTTH",
+      "etiquetaExterna": "Pon apagada",
+      "mensagem": "entrou em contato relatando uma interrupção em sua conexão com a internet. Após questionar sobre a situação do LED PON, o cliente confirmou que ele está apagado. Ao constatar que a rota está operante, seguimos os procedimentos padrões conforme documentados nos registros de eventos. Adicionalmente, conectamos o equipamento em outra tomada de energia e verificamos o botão 'ON/OFF'. No entanto, o cliente informou que o acesso continua interrompido. Diante dessa situação, foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local e resolver o problema. Agendado de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 43,
+      "filtro": ["FTTH"],
+      "nome": "Fibra rompida",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Cabo da Fibra Rompido",
+      "etiquetaExterna": "Cabo da Fibra Rompido",
+      "mensagem": "relata que algo rompeu o cabo de fibra fora de sua residência. Não foi necessário realizar alguma sondagem. Foi aberta uma ordem de serviço para resolução do problema e a visita técnica agendada para de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 44,
+      "filtro": ["FTTH"],
+      "nome": "Fibra rompida com valor",
+      "externo": true,
+      "aguardar": true,
+      "lembrete": false,
+      "etiquetaInterna": "Cabo da Fibra Rompido",
+      "etiquetaExterna": "Cabo da Fibra Rompido",
+      "mensagem": "informou que devido um serviço em sua residência, a fibra sofreu danos, resultando na interrupção do serviço. Após a confirmação dos dados, foi informado que seria necessário o envio de uma equipe técnica para realizar o reparo. Foi explicado que o custo da visita técnica seria de R$ 20,00 e, se fosse necessário substituir cabos, teria uma taxa adicional de R$ 0,60 por metro de fibra e de R$ 1,30 por metros de cabo de rede. O cliente aceitou o envio da equipe e foi informado que o valor seria cobrado na próxima fatura."
+    },
+    {
+      "id": 45,
+      "filtro": ["FTTH"],
+      "nome": "Cabo de fibra baixo",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
+      "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
+      "mensagem": "relata sobre um cabo de fibra solto fora de sua residência, foi aberta uma Ordem de Serviço (OS) para verificação. Agendado de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 46,
+      "filtro": ["FTTH"],
+      "nome": "Cabo de fibra baixo com valor",
+      "externo": true,
+      "aguardar": true,
+      "lembrete": false,
+      "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
+      "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
+      "mensagem": "entra em contato solictando o remanejamento do cabo de fibra devido uma reforma em sua residência. Foi repassado o valo de R$20,00 mais metragem de cabo de fibra ou rede caso necessário nos valores de R$0,60 e R$1,30 respectivamente. Cliente ciente e deseja o serviço."
     }
   ],
   "grausParentesco": [
