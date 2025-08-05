@@ -2,51 +2,51 @@
   "problemas": [
     {
       "id": 1,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Lentidão - Resolvido",
       "externo": false,
       "aguardar": false,
       "lembrete": true,
       "etiquetaInterna": "Lentidão - FTTH",
       "etiquetaExterna": "",
-      "mensagem": "fez contato para relatar lentidão em sua conexão. Após verificar as informações junto ao cliente, constatou-se que o problema ocorria tanto nas proximidades quanto em locais mais distantes do roteador/modem, contudo limitava-se à rede Wi-Fi.  Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que o acesso foi normalizado."
+      "mensagem": "fez contato para relatar lentidão em sua conexão. Após verificar as informações junto ao cliente, constatou-se que o problema ocorria tanto nas proximidades quanto em locais mais distantes do roteador/modem.  Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que o acesso foi normalizado."
     },
     {
       "id": 2,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Lentidão - Externo",
       "externo": true,
       "aguardar": true,
       "lembrete": false,
       "etiquetaInterna": "Lentidão - FTTH",
       "etiquetaExterna": "Lentidão",
-      "mensagem": "fez contato para relatar lentidão em sua conexão recorrentemente. Após verificar as informações junto ao cliente, constatou-se que o problema ocorria tanto nas proximidades quanto em locais mais distantes do roteador/modem, contudo limitava-se à rede Wi-Fi.  Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que o problema continuar. Dessa forma, será gerado uma O.S. Para equipe verificar no local. Agendado conforme a disponibilidade do cliente."
+      "mensagem": "fez contato para relatar lentidão em sua conexão recorrentemente. Após verificar as informações junto ao cliente, constatou-se que o problema ocorria tanto nas proximidades quanto em locais mais distantes do roteador/modem.  Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. O cliente informou que o problema continuar. Dessa forma, será gerado uma O.S. Para equipe verificar no local. Agendado conforme a disponibilidade do cliente."
     },
     {
       "id": 3,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Lentidão - Ficou testando",
       "externo": false,
       "aguardar": false,
       "lembrete": true,
       "etiquetaInterna": "Lentidão - FTTH",
       "etiquetaExterna": "",
-      "mensagem": "fez contato para relatar lentidão em sua conexão. Após verificar as informações junto ao cliente, constatou-se que o problema ocorria tanto nas proximidades quanto em locais mais distantes do roteador/modem, contudo limitava-se à rede Wi-Fi.  Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. Foi acordado com o cliente que o mesmo fique testando durante o restante do dia e caso o problema venha a persistir, será aberto uma O.S. Para verificar."
+      "mensagem": "fez contato para relatar lentidão em sua conexão. Após verificar as informações junto ao cliente, constatou-se que o problema ocorria tanto nas proximidades quanto em locais mais distantes do roteador/modem.  Foram executados os procedimentos padrões conforme documentados nos registros de eventos, e solicitados alguns procedimentos manuais usuais. Foi acordado com o cliente que o mesmo fique testando durante o restante do dia e caso o problema venha a persistir, será aberto uma O.S. Para verificar."
     },
     {
       "id": 4,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Lentidão - Recorrente",
       "externo": true,
       "aguardar": true,
       "lembrete": false,
       "etiquetaInterna": "Lentidão - FTTH",
       "etiquetaExterna": "Lentidão",
-      "mensagem": "informa estar enfrentando lentidão. Após verificação, observa-se que o problema afeta todos os dispositivos e se restringe à rede sem fio. Eu menciono a intenção de atualizar a rede, no entanto, o cliente destaca que essa questão é recorrente e deseja que uma equipe externa conduza uma análise, uma vez que já havia contatado previamente sem sucesso. Diante da insatisfação do cliente e da constatação de que se trata de uma situação frequente ainda não atendida localmente, uma Ordem de Serviço (O.S.) vai ser aberta para resolver o problema e garantir a retenção do cliente. Agendado de acordo com a disponibilidade do cliente."
+      "mensagem": "informa estar enfrentando lentidão. Após verificação, observa-se que o problema afeta todos os dispositivos. Eu menciono a intenção de atualizar a rede, no entanto, o cliente destaca que essa questão é recorrente e deseja que uma equipe externa conduza uma análise, uma vez que já havia contatado previamente sem sucesso. Diante da insatisfação do cliente e da constatação de que se trata de uma situação frequente ainda não atendida localmente, uma Ordem de Serviço (O.S.) vai ser aberta para resolver o problema e garantir a retenção do cliente. Agendado de acordo com a disponibilidade do cliente."
     },
     {
       "id": 5,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Quedas de conexão - Resolvido",
       "externo": false,
       "aguardar": false,
@@ -57,7 +57,7 @@
     },
     {
       "id": 6,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Quedas de conexão - Externo",
       "externo": true,
       "aguardar": true,
@@ -68,7 +68,7 @@
     },
     {
       "id": 7,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Quedas de conexão - Ficou testando",
       "externo": false,
       "aguardar": false,
@@ -79,7 +79,7 @@
     },
     {
       "id": 8,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Quedas de conexão - Recorrente",
       "externo": true,
       "aguardar": true,
@@ -112,8 +112,8 @@
     },
     {
       "id": 11,
-      "filtro": ["FTTH"],
-      "nome": "Sem acesso - Resolvido",
+      "filtro": ["FTTH", "FWA"],
+      "nome": "Sem conexão - Resolvido",
       "externo": false,
       "aguardar": false,
       "lembrete": true,
@@ -123,8 +123,8 @@
     },
     {
       "id": 12,
-      "filtro": ["FTTH"],
-      "nome": "Sem acesso - Externo",
+      "filtro": ["FTTH", "FWA"],
+      "nome": "Sem conexão - Externo",
       "externo": true,
       "aguardar": false,
       "lembrete": false,
@@ -134,7 +134,7 @@
     },
     {
       "id": 13,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Senha incorreta",
       "externo": false,
       "aguardar": false,
@@ -167,7 +167,7 @@
     },
     {
       "id": 16,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Rede sumiu - Resolvido",
       "externo": false,
       "aguardar": false,
@@ -178,7 +178,7 @@
     },
     {
       "id": 17,
-      "filtro": ["FTTH"],
+      "filtro": ["FTTH", "FWA"],
       "nome": "Rede sumiu - Externo",
       "externo": true,
       "aguardar": false,
@@ -196,7 +196,7 @@
       "lembrete": false,
       "etiquetaInterna": "Ping alto",
       "etiquetaExterna": "",
-      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência foi reduzida para 60 ms, ficando dentro da garantia da brisanet."
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência foi reduzida para abaixo de 80 ms, ficando dentro da garantia da brisanet."
     },
     {
       "id": 19,
@@ -218,7 +218,7 @@
       "lembrete": false,
       "etiquetaInterna": "Ping alto",
       "etiquetaExterna": "",
-      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência foi reduzida para 60 ms, ficando dentro da garantia da brisanet. O cliente foi instruído a monitorar o desempenho ao longo do dia e a entrar em contato novamente se o problema persistir, para que uma equipe técnica especializada possa ser enviada."
+      "mensagem": "relatou problemas com alta latência (ping) ao jogar, mesmo utilizando uma conexão cabeada. Após confirmar as informações do titular, foi feita uma reconfiguração da rede e o cliente foi orientado a reiniciar o roteador. A latência foi reduzida para abaixo de 80 ms, ficando dentro da garantia da brisanet. O cliente foi instruído a monitorar o desempenho ao longo do dia e a entrar em contato novamente se o problema persistir, para que uma equipe técnica especializada possa ser enviada."
     },
     {
       "id": 21,
