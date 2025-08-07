@@ -91,7 +91,7 @@
     {
       "id": 9,
       "filtro": ["FTTH"],
-      "nome": "Sem gêrencia - Resolvido",
+      "nome": "Sem gerência - Resolvido",
       "externo": false,
       "aguardar": false,
       "lembrete": true,
@@ -102,7 +102,7 @@
     {
       "id": 10,
       "filtro": ["FTTH"],
-      "nome": "Sem gêrencia - Externo",
+      "nome": "Sem gerência - Externo",
       "externo": true,
       "aguardar": false,
       "lembrete": false,
@@ -287,7 +287,7 @@
       "mensagem": "informou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede cabeada. Verificado o sinal óptico na sua PON está dentro dos padrões. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Além disso, verificamos a placa de rede é Gigabyte e o cabo de rede é CAT. 5E. Após essas verificações, realizamos um teste adicional no velocímetro, e agora a velocidade atingiu o contratado."
     },
     {
-      "id": 26,
+      "id": 27,
       "filtro": ["FTTH"],
       "nome": "Plano no cabo - Externo",
       "externo": true,
@@ -298,7 +298,7 @@
       "mensagem": "informou estar enfrentando problemas de instabilidade, já que a velocidade do plano contratado não está sendo alcançada na rede cabeada. Verificado o sinal óptico de sua PON está dentro dos padrões. Executamos os procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Além disso, constatamos que a placa de rede é Gigabyte e o cabo de rede é CAT. 5E. Apesar dessas verificações, o teste adicional no velocímetro ainda indicou uma velocidade inferior à garantida. Diante disso, foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 27,
+      "id": 28,
       "filtro": ["FTTH"],
       "nome": "Plano no cabo - Ficou testando",
       "externo": false,
@@ -309,7 +309,7 @@
       "mensagem": "informou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede cabeada. Verificado o sinal óptico na sua PON está dentro dos padrões. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Além disso, verificamos a placa de rede é Gigabyte e o cabo de rede é CAT. 5E. Após essas verificações, realizamos um teste adicional no velocímetro, e agora a velocidade atingiu o contratado, porém, voltou a abaixar. Devido isso, o cliente ficou de continuar testando durante o restante do dia e caso continue persistido, irá entrar em contato para enviarmos uma equipe para analisar."
     },
     {
-      "id": 28,
+      "id": 29,
       "filtro": ["FTTH"],
       "nome": "Cabo de rede CAT5",
       "externo": false,
@@ -320,7 +320,7 @@
       "mensagem": "informou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede cabeada. Verificado o sinal óptico na sua PON está dentro dos padrões. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Além disso, verificamos a placa de rede é Gigabyte e ao verificar o cabo de rede, foi descoberto que é um cabo inferior a CAT5E. Após essa verificação, foi explicado que o cabo de rede estava limitando a entrega do plano. Cliente ciente ficou de providenciar um novo cabo."
     },
     {
-      "id": 29,
+      "id": 30,
       "filtro": ["FTTH"],
       "nome": "Placa de rede FE",
       "externo": false,
@@ -331,7 +331,7 @@
       "mensagem": "relatou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede cabeada. Após verificar que o sinal óptico na sua PON está dentro dos padrões, procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Após essas verificações, realizamos um teste adicional no velocímetro; no entanto, a velocidade continuou na mesma média de 90 Mbps. Verificamos que o cabo de rede é CAT. 5E e, ao examinar a placa de rede, identificamos que o problema está sendo ocasionado pela placa de rede FE (/100). O cliente está ciente dessa situação."
     },
     {
-      "id": 30,
+      "id": 31,
       "filtro": ["FTTH"],
       "nome": "Externo para confirmar entrega do plano",
       "externo": true,
@@ -342,7 +342,7 @@
       "mensagem": "relatou enfrentar problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede cabeada. Após verificar que o sinal óptico na sua PON está dentro dos padrões, realizamos os procedimentos padrão, conforme documentados nos registros de eventos, e recomendamos alguns procedimentos manuais usuais, incluindo o reinício do computador. Após essas verificações, realizamos um teste adicional no velocímetro; no entanto, a velocidade continuou na mesma média de 90 Mbps. O cliente deseja a visita de uma equipe para confirmar que está recebendo o serviço contratado. Diante disso, geramos uma Ordem de Serviço (O.S.) para realizar uma inspeção presencial no local. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 31,
+      "id": 32,
       "filtro": ["FTTH"],
       "nome": "Plano no wi-fi - Resolvido",
       "externo": false,
@@ -353,7 +353,7 @@
       "mensagem": "relatou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede sem fio. Verificamos que o sinal óptico de sua PON estava dentro dos padrões. Nesse contexto, explicamos sobre a garantia de entrega de velocidade apenas na rede cabeada e oferecemos um procedimento remoto para tentar melhorar, embora não pudéssemos garantir o mesmo desempenho na rede sem fio. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do aparelho usado para testar. Apesar dessas verificações, o teste no velocímetro ainda indicou uma velocidade inferior à garantida. Diante dessa situação, o cliente ficou satisfeito com a velocidade atual da rede sem fio."
     },
     {
-      "id": 31,
+      "id": 33,
       "filtro": ["FTTH"],
       "nome": "Plano no wi-fi - Externo",
       "externo": true,
@@ -364,7 +364,7 @@
       "mensagem": "relatou enfrentar problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede sem fio. Verificado o sinal óptico de sua PON estava dentro dos padrões. Nesse contexto, explicamos sobre a garantia de entrega de velocidade apenas na rede cabeada e oferecemos um procedimento remoto para tentar melhorar, embora não pudéssemos garantir o mesmo desempenho na rede sem fio. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do aparelho usado para testar. Apesar dessas verificações, o teste no velocímetro ainda indicou uma velocidade inferior à garantida. Diante dessa situação, o cliente solicitou a presença de uma equipe no local, com um notebook e cabo de rede da Brisanet para uma inspeção direta e comprovação da entrega do plano. Foi gerada uma Ordem de Serviço (O.S.) para efetuar essa inspeção. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 32,
+      "id": 34,
       "filtro": ["FTTH"],
       "nome": "Plano no wi-fi - Ficou testando",
       "externo": false,
@@ -375,7 +375,7 @@
       "mensagem": "relatou estar enfrentando problemas de instabilidade, pois a velocidade do plano contratado não está sendo alcançada na rede sem fio. Verificamos que o sinal óptico de sua PON estava dentro dos padrões. Nesse contexto, explicamos sobre a garantia de entrega de velocidade apenas na rede cabeada e oferecemos um procedimento remoto para tentar melhorar, embora não pudéssemos garantir o mesmo desempenho na rede sem fio. Procedemos à execução dos procedimentos padrões, conforme documentados nos registros de eventos, e solicitamos alguns procedimentos manuais usuais, incluindo o reinício do aparelho usado para testar. Apesar dessas verificações, o teste no velocímetro ainda indicou uma velocidade inferior à garantida. Diante dessa situação, o cliente ficou de realizar o teste no cabo quando puder."
     },
     {
-      "id": 33,
+      "id": 35,
       "filtro": ["FTTH"],
       "nome": "Suspeita de LOS",
       "externo": true,
@@ -386,7 +386,7 @@
       "mensagem": "relatou a falta de acesso e a presença de um LED vermelho piscando. Ao questionar a possibilidade de incidentes ou remoção de equipamentos, o cliente negou qualquer ocorrência. Após constatar a normalidade da rota, foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 34,
+      "id": 36,
       "filtro": ["FTTH"],
       "nome": "Suspeita de LOS com valor",
       "externo": true,
@@ -397,7 +397,7 @@
       "mensagem": "informou problemas de acesso e a presença de um LED vermelho piscando. Após confirmação, uma Ordem de Serviço foi gerada para realizar uma inspeção no local. O cliente está ciente da taxa de R$20,00, com a possibilidade de cobranças adicionais em caso de reparos. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 35,
+      "id": 37,
       "filtro": ["FTTH"],
       "nome": "Rota inoperante",
       "externo": false,
@@ -408,7 +408,7 @@
       "mensagem": "fez contato para relatar a ausência de acesso. Foi explicado a ele que, naquele momento, a falta de acesso se deve a um rompimento de cabo de fibra que impactou toda a sua rota. Foi fornecido o prazo estimado pela URA para a regularização da situação. O cliente foi informado e está ciente dos detalhes."
     },
     {
-      "id": 36,
+      "id": 38,
       "filtro": ["FTTH", "FWA"],
       "nome": "Desconto de sem acesso",
       "externo": false,
@@ -419,7 +419,7 @@
       "mensagem": "entra em contato para solicitar desconto referente ao tempo que ficou sem acesso. Foi repassado que o desconto é fornecido somente pelo nosso setor financeiro, que pode ser contractado por ligação no número 0800 281 3017."
     },
     {
-      "id": 37,
+      "id": 39,
       "filtro": ["FTTH"],
       "nome": "OLT em manutenção",
       "externo": false,
@@ -430,7 +430,7 @@
       "mensagem": "entrou em contato relatando falta de internet. Foi informado que há uma manutenção em andamento na OLT que afeta o sinal do cliente e de vários outros clientes. Foi repassado o prazo máximo de normalização conforme a URA, porém o serviço pode voltar a qualquer momento. Cliente foi orientado a entrar em contato com o setor financeiro para solicitar desconto referente ao tempo sem acesso após a normalização. Cliente ciente e de acordo."
     },
     {
-      "id": 38,
+      "id": 40,
       "filtro": ["FTTH"],
       "nome": "PON piscando - Resolvido",
       "externo": false,
@@ -441,7 +441,7 @@
       "mensagem": "relata que está enfrentando uma interrupção na sua conexão com a internet. Após indagar sobre a situação do LED PON, o cliente confirma que ele está piscando. Ao constatar que a rota está operante, foram executados os procedimentos padrões conforme documentados nos registros de eventos. Após a execução dessas ações, a conectividade foi restabelecida com êxito."
     },
     {
-      "id": 39,
+      "id": 41,
       "filtro": ["FTTH"],
       "nome": "PON piscando - Externo",
       "externo": true,
@@ -452,7 +452,7 @@
       "mensagem": "relata que está enfrentando uma interrupção na sua conexão com a internet. Após questionar sobre a situação do LED PON, o cliente confirma que ele está piscando. Ao constatar que a rota está operante, foram executados os procedimentos padrões conforme documentados nos registros de eventos. O cliente informou que o acesso continua interrompido, desta forma foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local.  Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 40,
+      "id": 42,
       "filtro": ["FTTH"],
       "nome": "PON piscando - GPON",
       "externo": false,
@@ -463,7 +463,7 @@
       "mensagem": "entra em contato informando que está sem acesso, verificado que a LED PON está piscando, dessa forma foi reconfigurado a ONU e o problema persistiu. Foi tentado mais uma vez e o problema ainda persiste. O problema foi repassado pela liderança para o GPON verificar. Prazo de 24 horas. Cliente ciente do retorno."
     },
     {
-      "id": 41,
+      "id": 43,
       "filtro": ["FTTH"],
       "nome": "PON apagada - Resolvido",
       "externo": false,
@@ -474,7 +474,7 @@
       "mensagem": "entrou em contato informando que os serviços da Brisanet estão sem sinal. Ao ser questionado sobre a ativação da LED PON e a ocorrência de acidentes ou remoção de equipamento, o cliente negou qualquer incidente. Após verificar que a rota está normal, procedeu-se à reconfiguração e reinicialização do modem ONU, além de conectá-lo em outra tomada de energia. O cliente reportou que o acesso foi normalizado. "
     },
     {
-      "id": 42,
+      "id": 44,
       "filtro": ["FTTH"],
       "nome": "PON apagada - Externo",
       "externo": true,
@@ -485,7 +485,7 @@
       "mensagem": "entrou em contato relatando uma interrupção em sua conexão com a internet. Após questionar sobre a situação do LED PON, o cliente confirmou que ele está apagado. Ao constatar que a rota está operante, seguimos os procedimentos padrões conforme documentados nos registros de eventos. Adicionalmente, conectamos o equipamento em outra tomada de energia e verificamos o botão 'ON/OFF'. No entanto, o cliente informou que o acesso continua interrompido. Diante dessa situação, foi gerada uma Ordem de Serviço (O.S.) para efetuar uma inspeção direta no local e resolver o problema. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 43,
+      "id": 45,
       "filtro": ["FTTH"],
       "nome": "Fibra rompida",
       "externo": true,
@@ -496,7 +496,7 @@
       "mensagem": "relata que algo rompeu o cabo de fibra fora de sua residência. Não foi necessário realizar alguma sondagem. Foi aberta uma ordem de serviço para resolução do problema e a visita técnica agendada para de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 44,
+      "id": 46,
       "filtro": ["FTTH"],
       "nome": "Fibra rompida com valor",
       "externo": true,
@@ -507,7 +507,7 @@
       "mensagem": "informou que devido um serviço em sua residência, a fibra sofreu danos, resultando na interrupção do serviço. Após a confirmação dos dados, foi informado que seria necessário o envio de uma equipe técnica para realizar o reparo. Foi explicado que o custo da visita técnica seria de R$ 20,00 e, se fosse necessário substituir cabos, teria uma taxa adicional de R$ 0,60 por metro de fibra e de R$ 1,30 por metros de cabo de rede. O cliente aceitou o envio da equipe e foi informado que o valor seria cobrado na próxima fatura."
     },
     {
-      "id": 45,
+      "id": 47,
       "filtro": ["FTTH"],
       "nome": "Cabo de fibra baixo",
       "externo": true,
@@ -518,7 +518,7 @@
       "mensagem": "relata sobre um cabo de fibra solto fora de sua residência, foi aberta uma Ordem de Serviço (OS) para verificação. Agendado de acordo com a disponibilidade do cliente."
     }
     {
-      "id": 46,
+      "id": 48,
       "filtro": ["FTTH"],
       "nome": "Cabo de fibra baixo com valor",
       "externo": true,
@@ -529,7 +529,7 @@
       "mensagem": "entra em contato solictando o remanejamento do cabo de fibra devido uma reforma em sua residência. Foi repassado o valo de R$20,00 mais metragem de cabo de fibra ou rede caso necessário nos valores de R$0,60 e R$1,30 respectivamente. Cliente ciente e deseja o serviço."
     },
     {
-      "id": 47,
+      "id": 49,
       "filtro": ["FTTH"],
       "nome": "Cabo de fibra ressecado",
       "externo": true,
@@ -540,7 +540,7 @@
       "mensagem": "entra em contato solictando o remanejamento do cabo de fibra devido uma reforma em sua residência. Foi repassado o valo de R$20,00 mais metragem de cabo de fibra ou rede caso necessário nos valores de R$0,60 e R$1,30 respectivamente. Cliente ciente e deseja o serviço."
     },
     {
-      "id": 48,
+      "id": 50,
       "filtro": ["FTTH"],
       "nome": "Remanejamento de cabo fibra",
       "externo": true,
@@ -551,7 +551,7 @@
       "mensagem": "relata sobre a necessidade do remanejamento do cabo de fibra, pois, está passando sobre própriedades alheias. Agendado de acordo com a disponibilidade do cliente."
     },
     {
-      "id": 49,
+      "id": 51,
       "filtro": ["FTTH"],
       "nome": "Remanejamento de cabo fibra com valor",
       "externo": true,
