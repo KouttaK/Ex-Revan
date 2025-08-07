@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Máscara de Atendimento v4.6 - Enhanced UI with Redesigned Right Panel
+// @name         Máscara de Atendimento v4.6
 // @namespace    http://tampermonkey.net/
 // @version      4.6-redesigned
-// @description  Sistema de automação com filtros avançados, interface melhorada e seção de resumo redesenhada para consistência visual.
-// @author       Assistant & User
+// @description  Sistema de automação com filtros avançados, interface e seção de resumo.
+// @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
 // @grant        none
 // @run-at       document-idle
