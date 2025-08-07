@@ -465,7 +465,7 @@
     {
       "id": 41,
       "filtro": ["FTTH"],
-      "nome": "PON piscando - Resolvido",
+      "nome": "PON apagada - Resolvido",
       "externo": false,
       "aguardar": false,
       "lembrete": false,
@@ -476,7 +476,7 @@
     {
       "id": 42,
       "filtro": ["FTTH"],
-      "nome": "PON piscando - Externo",
+      "nome": "PON apagada - Externo",
       "externo": true,
       "aguardar": false,
       "lembrete": false,
@@ -516,7 +516,7 @@
       "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
       "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
       "mensagem": "relata sobre um cabo de fibra solto fora de sua residência, foi aberta uma Ordem de Serviço (OS) para verificação. Agendado de acordo com a disponibilidade do cliente."
-    },
+    }
     {
       "id": 46,
       "filtro": ["FTTH"],
@@ -527,6 +527,39 @@
       "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
       "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
       "mensagem": "entra em contato solictando o remanejamento do cabo de fibra devido uma reforma em sua residência. Foi repassado o valo de R$20,00 mais metragem de cabo de fibra ou rede caso necessário nos valores de R$0,60 e R$1,30 respectivamente. Cliente ciente e deseja o serviço."
+    },
+    {
+      "id": 47,
+      "filtro": ["FTTH"],
+      "nome": "Cabo de fibra ressecado",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Troca de Cabo Fibra - FTTH",
+      "etiquetaExterna": "Cabo da Fibra Rompido",
+      "mensagem": "entra em contato solictando o remanejamento do cabo de fibra devido uma reforma em sua residência. Foi repassado o valo de R$20,00 mais metragem de cabo de fibra ou rede caso necessário nos valores de R$0,60 e R$1,30 respectivamente. Cliente ciente e deseja o serviço."
+    },
+    {
+      "id": 48,
+      "filtro": ["FTTH"],
+      "nome": "Remanejamento de cabo fibra",
+      "externo": true,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
+      "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
+      "mensagem": "relata sobre a necessidade do remanejamento do cabo de fibra, pois, está passando sobre própriedades alheias. Agendado de acordo com a disponibilidade do cliente."
+    },
+    {
+      "id": 49,
+      "filtro": ["FTTH"],
+      "nome": "Remanejamento de cabo fibra com valor",
+      "externo": true,
+      "aguardar": true,
+      "lembrete": false,
+      "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
+      "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
+      "mensagem": "entra em contato solicitando o remanejamento do cabo de fibra devido uma reforma em sua residência. Foi repassado o valo de R$20,00 mais metragem de cabo de fibra ou rede caso necessário nos valores de R$0,60 e R$1,30 respectivamente. Cliente ciente e deseja o serviço."
     }
   ],
   "grausParentesco": [
