@@ -516,7 +516,7 @@
       "etiquetaInterna": "Cabo de fibra baixo/remanejamento - FTTH",
       "etiquetaExterna": "Cabo de Fibra Baixo/Remanejamento",
       "mensagem": "relata sobre um cabo de fibra solto fora de sua residência, foi aberta uma Ordem de Serviço (OS) para verificação. Agendado de acordo com a disponibilidade do cliente."
-    }
+    },
     {
       "id": 48,
       "filtro": ["FTTH"],
