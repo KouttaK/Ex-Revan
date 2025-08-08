@@ -1684,6 +1684,45 @@
         .getElementById("cancelEditButton")
         .addEventListener("click", () => this.toggleEditModal(false));
       document.addEventListener("keydown", this.handleGlobalKeydown.bind(this));
+
+      // ============================
+      // Clique global: checkmark e container
+      // - Se clicar na .ua-checkmark, alterna o checkbox associado e dispara 'input' e 'change'
+      // - Se clicar na .ua-checkbox-container (fora do input/label/checkmark), alterna o checkbox
+      // ============================
+      document.addEventListener("click", (e) => {
+        try {
+          // 1) Clique na checkmark
+          if (e.target && e.target.classList && e.target.classList.contains("ua-checkmark")) {
+            const checkbox = e.target.previousElementSibling;
+            if (checkbox && checkbox.type === "checkbox") {
+              checkbox.checked = !checkbox.checked;
+              // garantir que listeners 'input' e 'change' sejam acionados (updatePreview usa 'input')
+              checkbox.dispatchEvent(new Event("input", { bubbles: true }));
+              checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            return;
+          }
+
+          // 2) Clique no container (.ua-checkbox-container)
+          const container = e.target.closest && e.target.closest(".ua-checkbox-container");
+          if (container) {
+            // se o click foi em input, label ou checkmark, ignorar (comportamento nativo/handlers já tratam)
+            if (e.target.closest("input") || e.target.closest("label") || e.target.closest(".ua-checkmark")) return;
+            const checkbox = container.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+              checkbox.checked = !checkbox.checked;
+              checkbox.dispatchEvent(new Event("input", { bubbles: true }));
+              checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            return;
+          }
+        } catch (err) {
+          // não bloquear a execução em caso de erro
+          console.error("[UA] Erro no listener global de click:", err);
+        }
+      });
+
     }
 
     // New method to setup accordion functionality for right panel
