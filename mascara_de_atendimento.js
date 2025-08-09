@@ -2551,6 +2551,11 @@
             optionText: problemText,
         });
 
+        // Clica no campo de problemas para garantir que o dropdown seja fechado
+        log("Fechando dropdown do problema antes de prosseguir com serviço...", 'wait');
+        await h.click(SELECTORS.PROBLEM_SELECT, true);
+        await h.wait(TIMING.ANIMATION_DURATION);
+
         if (serviceText && serviceText.trim() !== '') {
           log("Aguardando habilitação do campo de serviço...", 'wait');
           await h.wait(TIMING.DEFAULT_WAIT);
