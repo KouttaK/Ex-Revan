@@ -1582,8 +1582,11 @@
     </div>
 </div>`;
 
- // =============== FUNÇÕES NOVAS / SELEÇÃO DEPENDENTE =================
+// ═════════════════════════════════════════════════════════════════
+  // ✅ NOVAS FUNÇÕES (Sem testes)
+  // ═════════════════════════════════════════════════════════════════
 
+  // Aguarda até que um elemento (select) esteja habilitado (não possua classe de disabled)
   const waitForElementEnabled = async (selector, isXPath = false, timeout = 10000) => {
     const log = (msg, status = 'info') => {
       const prefix = "[Service Selection]";
@@ -1594,22 +1597,26 @@
         default: console.info(`%c${prefix} ➡️ ${msg}`, 'color: #3b82f6;'); break;
       }
     };
+
     log(`Aguardando elemento ser habilitado: '${selector}'`, 'wait');
     const startTime = Date.now();
+
     while (Date.now() - startTime < timeout) {
       try {
         const element = isXPath
           ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
           : document.querySelector(selector);
+
         if (element) {
           const isDisabled =
             element.closest('nz-select')?.classList.contains('ant-select-disabled') ||
             element.classList.contains('ant-select-disabled') ||
             element.disabled;
-          if (!isDisabled) {
-            log(`Elemento habilitado encontrado: '${selector}'`, 'success');
-            return element;
-          }
+
+            if (!isDisabled) {
+              log(`Elemento habilitado encontrado: '${selector}'`, 'success');
+              return element;
+            }
         }
         await new Promise(r => setTimeout(r, 200));
       } catch (err) {
@@ -1621,6 +1628,7 @@
     return null;
   };
 
+  // Lida com seleção dependente problema -> serviço em selects do Ant Design
   const handleDependentServiceSelection = async ({
     problemSelector,
     serviceSelector,
@@ -1630,6 +1638,7 @@
     genericDropdownSelector = "//div[contains(@class, 'ant-select-dropdown') and not(contains(@class, 'ant-select-dropdown-hidden'))]//ul[contains(@class, 'ant-select-dropdown-menu')]",
     timing = { clickWait: 300, typeWait: 200, enableWait: 1000, filterWait: 400 }
   }) => {
+
     const log = (msg, status = 'info') => {
       const prefix = "[Dependent Service]";
       switch (status) {
@@ -1652,6 +1661,7 @@
       }
       return null;
     };
+
     const clickElement = async (selector, xpath = false) => {
       const el = await findElement(selector, xpath);
       if (el) {
@@ -1661,6 +1671,7 @@
       }
       return false;
     };
+
     const typeInElement = async (selector, text, xpath = false) => {
       const el = await findElement(selector, xpath);
       if (el) {
@@ -1674,52 +1685,64 @@
     };
 
     try {
+      // Problema
       log(`Selecionando problema: '${problemValue}'`);
       if (!await clickElement(problemSelector, true))
         throw new Error(`Clique falhou em: ${problemSelector}`);
+
       if (!await findElement(genericDropdownSelector, true))
         throw new Error("Dropdown do problema não apareceu");
+
       if (!await typeInElement(problemSelector, problemValue, true))
         throw new Error("Falha ao digitar no campo de problema");
+
       await wait(timing.filterWait);
+
       const problemOptionSelector = optionSelectorTemplate.replace('{value}', problemValue.toLowerCase());
       if (!await clickElement(problemOptionSelector, true))
         throw new Error(`Opção de problema não encontrada: ${problemValue}`);
+
       log(`Problema '${problemValue}' selecionado.`, 'success');
 
+      // Serviço dependente
       log("Aguardando habilitação do serviço...", 'wait');
       await wait(timing.enableWait);
-      const serviceEl = await waitForElementEnabled(serviceSelector, true, 10000);
-      if (!serviceEl) throw new Error("Campo de serviço não habilitou");
 
-      // >>> NOVO PASSO: re-clique no problema para fechar o dropdown antes de abrir serviço
-      log("Re-clicando no campo de problema para fechar dropdown antes do serviço.", 'info');
-      await clickElement(problemSelector, true);
-      await wait(120); // pequeno intervalo
+      const serviceEl = await waitForElementEnabled(serviceSelector, true, 10000);
+      if (!serviceEl)
+        throw new Error("Campo de serviço não habilitou");
 
       if (serviceValue && serviceValue.trim() !== '') {
         log(`Selecionando serviço: '${serviceValue}'`);
         if (!await clickElement(serviceSelector, true))
           throw new Error("Falha ao clicar no campo de serviço");
+
         if (!await findElement(genericDropdownSelector, true))
           throw new Error("Dropdown do serviço não apareceu");
+
         if (!await typeInElement(serviceSelector, serviceValue, true))
           throw new Error("Falha ao digitar no serviço");
+
         await wait(timing.filterWait);
+
         const serviceOptionSelector = optionSelectorTemplate.replace('{value}', serviceValue.toLowerCase());
         if (!await clickElement(serviceOptionSelector, true))
           throw new Error(`Opção de serviço não encontrada: ${serviceValue}`);
+
         log(`Serviço '${serviceValue}' selecionado.`, 'success');
       } else {
         log("Nenhum serviço configurado - etapa ignorada.");
       }
+
       return { success: true, message: "Seleção dependente concluída" };
+
     } catch (error) {
       log(`Erro: ${error.message}`, 'error');
       return { success: false, error: error.message };
     }
   };
 
+  // Integra no fluxo existente (uso genérico)
   const executeServiceSelection = async (selectedItem, selectors, timing) => {
     if (!selectedItem.externo || !selectedItem.servicoExterno) {
       return { success: true, message: "Nenhum serviço externo configurado" };
@@ -1738,6 +1761,9 @@
     });
   };
 
+  // ═════════════════════════════════════════════════════════════════
+  // 🧠 CLASSE PRINCIPAL
+  // ═════════════════════════════════════════════════════════════════
   class AttendanceAutomation {
     constructor() {
       this.allItems = [];
@@ -1748,7 +1774,11 @@
       this.finalMessage = "";
       this.isLoading = false;
       this.isFilterExpanded = true;
-      this.accordionStates = { messageCard: true, tagCard: true, actionCard: true };
+      this.accordionStates = {
+        messageCard: true,
+        tagCard: true,
+        actionCard: true
+      };
       this.init();
     }
 
@@ -1765,46 +1795,73 @@
       s.textContent = CSS_STYLES;
       document.head.appendChild(s);
     }
+
     injectHTML() {
       const c = document.createElement("div");
       c.innerHTML = HTML_STRUCTURE;
       document.body.appendChild(c);
     }
+
     setupEventListeners() {
       const floatingBtn = document.getElementById("automationFloatingBtn");
       floatingBtn.addEventListener("click", () => this.toggleModal(true));
       this.makeDraggable(floatingBtn);
-      document.getElementById("automationOverlay").addEventListener("click", () => this.toggleModal(false));
+
+      document
+        .getElementById("automationOverlay")
+        .addEventListener("click", () => this.toggleModal(false));
+
       const searchInput = document.getElementById("searchInput");
-      if (searchInput) {
-        searchInput.addEventListener("input", this.handleSearch.bind(this));
-        searchInput.addEventListener("keydown", this.handleSearchKeydown.bind(this));
-      }
-      const clearBtn = document.getElementById("clearButton");
-      if (clearBtn) clearBtn.addEventListener("click", this.resetSelection.bind(this));
-      const dropdown = document.getElementById("dropdown");
-      if (dropdown) dropdown.addEventListener("click", this.handleDropdownClick.bind(this));
-      const filterAcc = document.getElementById("filterAccordionHeader");
-      if (filterAcc) filterAcc.addEventListener("click", this.toggleFilterAccordion.bind(this));
-      const clearFiltersBtn = document.getElementById("clearFiltersBtn");
-      if (clearFiltersBtn) clearFiltersBtn.addEventListener("click", this.clearAllFilters.bind(this));
+      searchInput.addEventListener("input", this.handleSearch.bind(this));
+      searchInput.addEventListener(
+        "keydown",
+        this.handleSearchKeydown.bind(this)
+      );
+
+      document
+        .getElementById("clearButton")
+        .addEventListener("click", this.resetSelection.bind(this));
+      document
+        .getElementById("dropdown")
+        .addEventListener("click", this.handleDropdownClick.bind(this));
+
+      document
+        .getElementById("filterAccordionHeader")
+        .addEventListener("click", this.toggleFilterAccordion.bind(this));
+
+      document
+        .getElementById("clearFiltersBtn")
+        .addEventListener("click", this.clearAllFilters.bind(this));
+
       [
-        "holderCheckbox","speakerInput","relationshipSelect","observationsTextarea",
-        "externalCallCheckbox","reminderCheckbox","importantCheckbox",
-      ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener("input", this.updatePreview.bind(this));
-      });
-      const editBtn = document.getElementById("editButton");
-      if (editBtn) editBtn.addEventListener("click", this.openEditModal.bind(this));
-      const sendBtn = document.getElementById("sendButton");
-      if (sendBtn) sendBtn.addEventListener("click", this.executeAutomation.bind(this));
-      const saveEditButton = document.getElementById("saveEditButton");
-      if (saveEditButton) saveEditButton.addEventListener("click", this.saveEdit.bind(this));
-      const cancelEditButton = document.getElementById("cancelEditButton");
-      if (cancelEditButton) cancelEditButton.addEventListener("click", () => this.toggleEditModal(false));
+        "holderCheckbox",
+        "speakerInput",
+        "relationshipSelect",
+        "observationsTextarea",
+        "externalCallCheckbox",
+        "reminderCheckbox",
+        "importantCheckbox",
+      ].forEach(id =>
+        document
+          .getElementById(id)
+          .addEventListener("input", this.updatePreview.bind(this))
+      );
+
+      document
+        .getElementById("editButton")
+        .addEventListener("click", this.openEditModal.bind(this));
+      document
+        .getElementById("sendButton")
+        .addEventListener("click", this.executeAutomation.bind(this));
+      document
+        .getElementById("saveEditButton")
+        .addEventListener("click", this.saveEdit.bind(this));
+      document
+        .getElementById("cancelEditButton")
+        .addEventListener("click", () => this.toggleEditModal(false));
       document.addEventListener("keydown", this.handleGlobalKeydown.bind(this));
 
+      // Clique em checkmark e container customizados
       document.addEventListener("click", (e) => {
         try {
           if (e.target?.classList?.contains("ua-checkmark")) {
@@ -1825,6 +1882,7 @@
               checkbox.dispatchEvent(new Event("input", { bubbles: true }));
               checkbox.dispatchEvent(new Event("change", { bubbles: true }));
             }
+            return;
           }
         } catch (err) {
           console.error("[UA] Erro no listener global de click:", err);
@@ -1837,26 +1895,29 @@
         this.accordionStates[cardId] = !this.accordionStates[cardId];
         const content = document.getElementById(`${cardId}Content`);
         const icon = document.getElementById(`${cardId}Icon`);
-        if (content) content.classList.toggle("ua-expanded", this.accordionStates[cardId]);
-        if (icon) icon.classList.toggle("ua-expanded", this.accordionStates[cardId]);
+        content.classList.toggle("ua-expanded", this.accordionStates[cardId]);
+        icon.classList.toggle("ua-expanded", this.accordionStates[cardId]);
       };
     }
 
     async loadData() {
       const btn = document.getElementById("automationFloatingBtn");
-      const iconSVG = "⚙️";
+      const iconSVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-240h560v-400H200v400Z"></path></svg>';
       try {
         this.setLoading(true, btn);
         const response = await fetch(CONFIG.GITHUB_JSON_URL);
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (!response.ok)
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         const data = await response.json();
         this.allItems = data.problemas || [];
-        if (this.allItems.length === 0) throw new Error("Nenhum problema encontrado no JSON");
+        if (this.allItems.length === 0)
+          throw new Error("Nenhum problema encontrado no JSON");
+
         this.setupFilters();
         this.filteredItems = [...this.allItems];
         this.showToast("Automação carregada.", "success");
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
         this.showToast("Erro ao carregar dados.", "error");
       } finally {
         this.setLoading(false, btn, iconSVG);
@@ -1864,29 +1925,37 @@
     }
 
     setupFilters() {
-      const set = new Set();
+      const allFilters = new Set();
       this.allItems.forEach(item => {
-        if (item.filtro && Array.isArray(item.filtro)) item.filtro.forEach(f => set.add(f));
+        if (item.filtro && Array.isArray(item.filtro)) {
+          item.filtro.forEach(filter => allFilters.add(filter));
+        }
       });
-      this.availableFilters = Array.from(set).sort();
+
+      this.availableFilters = Array.from(allFilters).sort();
       this.renderFilterOptions();
       this.updateFilterCount();
     }
 
     renderFilterOptions() {
-      const container = document.getElementById("filterOptions");
-      if (!container) return;
-      container.innerHTML = "";
+      const filterOptions = document.getElementById("filterOptions");
+      filterOptions.innerHTML = "";
+
       this.availableFilters.forEach(filter => {
-        const label = document.createElement("label");
-        label.className = "ua-filter-option";
-        label.innerHTML = `
+        const filterOption = document.createElement("label");
+        filterOption.className = "ua-filter-option";
+        filterOption.innerHTML = `
           <input type="checkbox" value="${filter}" data-filter="${filter}">
           <span class="ua-checkmark"></span>
-          <span class="ua-filter-label">${filter}</span>`;
-        const cb = label.querySelector("input");
-        cb.addEventListener("change", e => this.handleFilterChange(filter, e.target.checked));
-        container.appendChild(label);
+          <span class="ua-filter-label">${filter}</span>
+        `;
+
+        const checkbox = filterOption.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener("change", (e) => {
+          this.handleFilterChange(filter, e.target.checked);
+        });
+
+        filterOptions.appendChild(filterOption);
       });
     }
 
@@ -1894,16 +1963,20 @@
       this.isFilterExpanded = !this.isFilterExpanded;
       const content = document.getElementById("filterAccordionContent");
       const icon = document.getElementById("filterAccordionIcon");
-      if (content) content.classList.toggle("ua-expanded", this.isFilterExpanded);
-      if (icon) icon.classList.toggle("ua-expanded", this.isFilterExpanded);
+
+      content.classList.toggle("ua-expanded", this.isFilterExpanded);
+      icon.classList.toggle("ua-expanded", this.isFilterExpanded);
     }
 
     handleFilterChange(filter, isChecked) {
       if (isChecked) {
-        if (!this.selectedFilters.includes(filter)) this.selectedFilters.push(filter);
+        if (!this.selectedFilters.includes(filter)) {
+          this.selectedFilters.push(filter);
+        }
       } else {
         this.selectedFilters = this.selectedFilters.filter(f => f !== filter);
       }
+
       this.updateFilteredItems();
       this.updateFilterCount();
       this.updateClearFiltersButton();
@@ -1913,13 +1986,15 @@
       if (this.selectedFilters.length === 0) {
         this.filteredItems = [...this.allItems];
       } else {
-        this.filteredItems = this.allItems.filter(item =>
-          item.filtro && Array.isArray(item.filtro) &&
-          this.selectedFilters.some(f => item.filtro.includes(f))
-        );
+        this.filteredItems = this.allItems.filter(item => {
+          if (!item.filtro || !Array.isArray(item.filtro)) return false;
+          return this.selectedFilters.some(selectedFilter =>
+            item.filtro.includes(selectedFilter)
+          );
+        });
       }
+
       const searchInput = document.getElementById("searchInput");
-      if (!searchInput) return;
       if (this.filteredItems.length === 0) {
         searchInput.value = "";
         this.showDropdown(false);
@@ -1930,44 +2005,45 @@
 
     updateFilterCount() {
       const badge = document.getElementById("filterCountBadge");
-      if (badge) {
-        const count = this.selectedFilters.length;
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
-      }
+      const count = this.selectedFilters.length;
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline-block' : 'none';
     }
 
     clearAllFilters() {
       this.selectedFilters = [];
-      document.querySelectorAll('#filterOptions input[type="checkbox"]').forEach(cb => cb.checked = false);
+      document
+        .querySelectorAll('#filterOptions input[type="checkbox"]')
+        .forEach(cb => (cb.checked = false));
       this.updateFilteredItems();
       this.updateFilterCount();
       this.updateClearFiltersButton();
     }
 
     updateClearFiltersButton() {
-      const btn = document.getElementById("clearFiltersBtn");
-      if (btn) btn.classList.toggle("ua-hidden", this.selectedFilters.length === 0);
+      const clearBtn = document.getElementById("clearFiltersBtn");
+      clearBtn.classList.toggle("ua-hidden", this.selectedFilters.length === 0);
     }
 
     setLoading(isLoading, button, defaultContent = "") {
-      if (!button) return;
       this.isLoading = isLoading;
       button.disabled = isLoading;
-      button.innerHTML = isLoading ? '<div class="ua-loading-spinner"></div>' : defaultContent;
+      button.innerHTML = isLoading
+        ? '<div class="ua-loading-spinner"></div>'
+        : defaultContent;
     }
 
     toggleModal(show) {
       const modal = document.getElementById("automationModal");
       const overlay = document.getElementById("automationOverlay");
       const btn = document.getElementById("automationFloatingBtn");
-      if (!modal || !overlay || !btn) return;
+
       btn.classList.toggle("ua-hidden-by-modal", show);
+
       if (show) {
         modal.classList.add("ua-show");
         overlay.classList.add("ua-show");
-        const s = document.getElementById("searchInput");
-        if (s) s.focus();
+        document.getElementById("searchInput").focus();
       } else {
         modal.classList.remove("ua-show");
         overlay.classList.remove("ua-show");
@@ -1976,26 +2052,23 @@
     }
 
     toggleEditModal(show) {
-      const m = document.getElementById("editModal");
-      if (!m) return;
-      m.classList.toggle("ua-show", show);
-      if (show) {
-        const t = document.getElementById("editMessageTextarea");
-        if (t) t.focus();
-      }
+      document.getElementById("editModal").classList.toggle("ua-show", show);
+      if (show) document.getElementById("editMessageTextarea").focus();
     }
 
     handleSearch(e) {
       const filter = e.target.value.toLowerCase().trim();
-      const clear = document.getElementById("clearButton");
-      if (clear) clear.classList.toggle("ua-hidden", !filter);
+      document
+        .getElementById("clearButton")
+        .classList.toggle("ua-hidden", !filter);
       if (filter) {
-        const res = this.filteredItems.filter(i =>
-          i.nome.toLowerCase().includes(filter) ||
-          (i.mensagem && i.mensagem.toLowerCase().includes(filter))
+        const f = this.filteredItems.filter(
+          i =>
+            i.nome.toLowerCase().includes(filter) ||
+            (i.mensagem && i.mensagem.toLowerCase().includes(filter))
         );
-        this.populateDropdown(res);
-        this.showDropdown(res.length > 0);
+        this.populateDropdown(f);
+        this.showDropdown(f.length > 0);
       } else {
         this.showDropdown(false);
       }
@@ -2017,7 +2090,9 @@
 
     navigateDropdown(key, items) {
       if (items.length === 0) return;
-      let i = Array.from(items).findIndex(it => it.classList.contains("selected"));
+      let i = Array.from(items).findIndex(it =>
+        it.classList.contains("selected")
+      );
       if (i !== -1) items[i].classList.remove("selected");
       if (key === "ArrowDown") i = i < items.length - 1 ? i + 1 : 0;
       else if (key === "ArrowUp") i = i > 0 ? i - 1 : items.length - 1;
@@ -2027,15 +2102,18 @@
 
     populateDropdown(items) {
       const d = document.getElementById("dropdown");
-      if (!d) return;
-      d.innerHTML = items.map(i =>
-        `<li data-id="${i.id}" title="${i.mensagem ? i.mensagem.substring(0,100) + "..." : ""}">${i.nome}</li>`
-      ).join("");
+      d.innerHTML = items
+        .map(
+          i =>
+            `<li data-id="${i.id}" title="${
+              i.mensagem ? i.mensagem.substring(0, 100) + "..." : ""
+            }">${i.nome}</li>`
+        )
+        .join("");
     }
 
     showDropdown(show) {
-      const d = document.getElementById("dropdown");
-      if (d) d.classList.toggle("ua-show", show);
+      document.getElementById("dropdown").classList.toggle("ua-show", show);
     }
 
     handleDropdownClick(e) {
@@ -2043,8 +2121,7 @@
       const id = e.target.dataset.id;
       this.selectedItem = this.allItems.find(i => i.id == id);
       if (this.selectedItem) {
-        const s = document.getElementById("searchInput");
-        if (s) s.value = this.selectedItem.nome;
+        document.getElementById("searchInput").value = this.selectedItem.nome;
         this.showDropdown(false);
         this.updateUIForSelectedItem();
       }
@@ -2053,10 +2130,8 @@
     resetSelection() {
       this.selectedItem = null;
       const s = document.getElementById("searchInput");
-      if (s) {
-        s.value = "";
-        s.dispatchEvent(new Event("input"));
-      }
+      s.value = "";
+      s.dispatchEvent(new Event("input"));
       this.hideRightPanelAndFooter();
     }
 
@@ -2079,54 +2154,54 @@
 
     updateUIForSelectedItem() {
       this.showRightPanelAndFooter();
-      const spec = document.getElementById("specificationSection");
-      if (spec) spec.classList.remove("ua-hidden");
-      const { externo, lembrete } = this.selectedItem;
-      const externalLabel = document.getElementById("externalCallLabel");
-      const reminderLabel = document.getElementById("reminderLabel");
-      const externalCheckbox = document.getElementById("externalCallCheckbox");
-      const reminderCheckbox = document.getElementById("reminderCheckbox");
-      if (externalLabel) externalLabel.classList.toggle("ua-hidden", !externo);
-      if (externalCheckbox) externalCheckbox.checked = false;
-      if (reminderLabel) reminderLabel.classList.toggle("ua-hidden", externo);
-      if (reminderCheckbox) reminderCheckbox.checked = !externo && lembrete;
+      document.getElementById("specificationSection").classList.remove("ua-hidden");
+
+      const { externo, aguardar, lembrete } = this.selectedItem;
+      document
+        .getElementById("externalCallLabel")
+        .classList.toggle("ua-hidden", !externo);
+      document.getElementById("externalCallCheckbox").checked = false;
+      document
+        .getElementById("reminderLabel")
+        .classList.toggle("ua-hidden", externo);
+      document.getElementById("reminderCheckbox").checked =
+        !externo && lembrete;
+
       this.validateProblemServiceConfig(this.selectedItem);
+
       this.updatePreview();
       this.updateTagPreview();
       this.updateActionPreview();
     }
 
     showRightPanelAndFooter() {
-      const rp = document.getElementById("modalRightPanel");
-      const ft = document.getElementById("modalFooter");
-      const lp = document.getElementById("modalLeftPanel");
-      if (rp) rp.classList.remove("ua-hidden");
-      if (ft) ft.classList.remove("ua-hidden");
-      if (lp) lp.classList.remove("ua-full-width");
+      document.getElementById("modalRightPanel").classList.remove("ua-hidden");
+      document.getElementById("modalFooter").classList.remove("ua-hidden");
+      document.getElementById("modalLeftPanel").classList.remove("ua-full-width");
     }
 
     hideRightPanelAndFooter() {
-      const rp = document.getElementById("modalRightPanel");
-      const ft = document.getElementById("modalFooter");
-      const lp = document.getElementById("modalLeftPanel");
-      const spec = document.getElementById("specificationSection");
-      if (rp) rp.classList.add("ua-hidden");
-      if (ft) ft.classList.add("ua-hidden");
-      if (lp) lp.classList.add("ua-full-width");
-      if (spec) spec.classList.add("ua-hidden");
+      document.getElementById("modalRightPanel").classList.add("ua-hidden");
+      document.getElementById("modalFooter").classList.add("ua-hidden");
+      document.getElementById("modalLeftPanel").classList.add("ua-full-width");
+      document.getElementById("specificationSection").classList.add("ua-hidden");
     }
 
     updatePreview() {
       if (!this.selectedItem) return;
-      const isHolder = document.getElementById("holderCheckbox")?.checked;
-      const speakerInfo = document.getElementById("speakerInfo");
-      if (speakerInfo) speakerInfo.classList.toggle("ua-hidden", isHolder);
-      const speaker = document.getElementById("speakerInput")?.value.trim() || "";
-      const relation = document.getElementById("relationshipSelect")?.value || "";
-      const obs = document.getElementById("observationsTextarea")?.value.trim() || "";
+
+      const isHolder = document.getElementById("holderCheckbox").checked;
+      document.getElementById("speakerInfo").classList.toggle("ua-hidden", isHolder);
+
+      const speaker = document.getElementById("speakerInput").value.trim();
+      const relation = document.getElementById("relationshipSelect").value;
+      const obs = document.getElementById("observationsTextarea").value.trim();
+
       const mainMsg = this.selectedItem.mensagem || "";
       const obsText = obs ? `\n\nObservações:\n${obs}` : "";
+
       let message = "";
+
       if (isHolder) {
         message = `O titular ${mainMsg}${obsText}`;
       } else if (speaker) {
@@ -2135,6 +2210,7 @@
       } else {
         message = `O cliente ${mainMsg}${obsText}`;
       }
+
       this.finalMessage = message;
       this.updateMessagePreview();
       this.updateTagPreview();
@@ -2142,40 +2218,62 @@
     }
 
     updateMessagePreview() {
-      const preview = document.getElementById("messagePreview");
-      if (!preview) return;
-      preview.textContent = this.finalMessage;
+      const messagePreview = document.getElementById("messagePreview");
+      messagePreview.textContent = this.finalMessage;
+
       const charCount = this.finalMessage.length;
       const wordCount = this.finalMessage.trim().split(/\s+/).filter(w => w.length > 0).length;
-      const stats = preview.parentElement.querySelector('.ua-message-stats');
-      if (stats) {
-        const charC = stats.querySelector('.ua-char-count');
-        const wordC = stats.querySelector('.ua-word-count');
-        if (charC) charC.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>${charCount} caracteres`;
-        if (wordC) wordC.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>${wordCount} palavras`;
+
+      const messageStats = messagePreview.parentElement.querySelector('.ua-message-stats');
+      if (messageStats) {
+        messageStats.querySelector('.ua-char-count').innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+          </svg>
+          ${charCount} caracteres
+        `;
+        messageStats.querySelector('.ua-word-count').innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          ${wordCount} palavras
+        `;
       }
     }
 
     updateTagPreview() {
       if (!this.selectedItem) return;
       const tagPreview = document.getElementById("tagPreview");
-      if (!tagPreview) return;
       const tagGrid = tagPreview.querySelector(".ua-tag-grid");
-      if (!tagGrid) return;
       let tags = [];
-      if (this.selectedItem.etiquetaInterna) tags.push({ text: this.selectedItem.etiquetaInterna, type: 'internal', category: 'Interna' });
-      if (this.selectedItem.externo && this.selectedItem.etiquetaExterna) tags.push({ text: this.selectedItem.etiquetaExterna, type: 'external', category: 'Externa' });
-      if (this.selectedItem.servicoExterno) tags.push({ text: this.selectedItem.servicoExterno, type: 'service', category: 'Serviço' });
+
+      if (this.selectedItem.etiquetaInterna) {
+        tags.push({ text: this.selectedItem.etiquetaInterna, type: 'internal', category: 'Interna' });
+      }
+
+      if (this.selectedItem.externo && this.selectedItem.etiquetaExterna) {
+        tags.push({ text: this.selectedItem.etiquetaExterna, type: 'external', category: 'Externa' });
+      }
+
+      if (this.selectedItem.servicoExterno) {
+        tags.push({ text: this.selectedItem.servicoExterno, type: 'service', category: 'Serviço' });
+      }
+
       if (tags.length > 0) {
-        const grouped = tags.reduce((acc, t) => ((acc[t.category] = acc[t.category] || []).push(t), acc), {});
-        tagGrid.innerHTML = Object.entries(grouped).map(([c, arr]) =>
-          `<div class="ua-tag-group">
-            <div class="ua-tag-group-title">${c}</div>
+        const grouped = tags.reduce((acc, tag) => {
+          (acc[tag.category] = acc[tag.category] || []).push(tag);
+          return acc;
+        }, {});
+        tagGrid.innerHTML = Object.entries(grouped).map(([cat, arr]) => `
+          <div class="ua-tag-group">
+            <div class="ua-tag-group-title">${cat}</div>
             <div class="ua-tag-list">
               ${arr.map(t => `<span class="ua-tag-item ${t.type}">${t.text}</span>`).join('')}
             </div>
-          </div>`
-        ).join('');
+          </div>
+        `).join('');
         tagPreview.classList.remove("ua-hidden");
       } else {
         tagGrid.innerHTML = `<div class="ua-empty-state">
@@ -2191,44 +2289,49 @@
     updateActionPreview() {
       if (!this.selectedItem) return;
       const actionPreview = document.getElementById("actionPreview");
-      if (!actionPreview) return;
-      const list = actionPreview.querySelector(".ua-action-list");
-      if (!list) return;
+      const actionList = actionPreview.querySelector(".ua-action-list");
       let actions = [];
-      if (document.getElementById("importantCheckbox")?.checked) {
+
+      if (document.getElementById("importantCheckbox").checked) {
         actions.push({ text: "Marcar como chamado importante", icon: "alert-circle" });
       }
+
       if (this.selectedItem.externo) {
         actions.push({ text: "Encaminhar para suporte externo", icon: "external-link" });
-        if (document.getElementById("externalCallCheckbox")?.checked) {
+        if (document.getElementById("externalCallCheckbox").checked) {
           actions.push({ text: "Aguardar chamado externo", icon: "clock" });
         }
       }
-      if (!this.selectedItem.externo && document.getElementById("reminderCheckbox")?.checked) {
+
+      if (!this.selectedItem.externo && document.getElementById("reminderCheckbox").checked) {
         actions.push({ text: "Adicionar lembrete de retorno", icon: "bell" });
       }
-      if (!this.selectedItem.externo && !document.getElementById("reminderCheckbox")?.checked) {
+
+      if (!this.selectedItem.externo && !document.getElementById("reminderCheckbox").checked) {
         actions.push({ text: "Finalizar atendimento", icon: "check-circle" });
       }
-      const icons = {
-        'alert-circle': '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>',
-        'external-link': '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15,3 21,3 21,9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line>',
-        'clock': '<circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline>',
-        'bell': '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>',
-        'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline>'
+
+      const getIconSVG = (iconName) => {
+        const icons = {
+          'alert-circle': '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>',
+          'external-link': '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15,3 21,3 21,9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line>',
+          'clock': '<circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline>',
+          'bell': '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>',
+          'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline>'
+        };
+        return `<svg class="ua-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[iconName] || icons['check-circle']}</svg>`;
       };
+
       if (actions.length > 0) {
-        list.innerHTML = actions.map(a =>
+        actionList.innerHTML = actions.map(action =>
           `<div class="ua-action-item">
-            <svg class="ua-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              ${icons[a.icon] || icons['check-circle']}
-            </svg>
-            <span>${a.text}</span>
+            ${getIconSVG(action.icon)}
+            <span>${action.text}</span>
           </div>`
         ).join('');
         actionPreview.classList.remove("ua-hidden");
       } else {
-        list.innerHTML = `<div class="ua-empty-state">
+        actionList.innerHTML = `<div class="ua-empty-state">
           <svg class="ua-empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="15" y1="9" x2="9" y2="15"></line>
@@ -2241,28 +2344,25 @@
     }
 
     openEditModal() {
-      const t = document.getElementById("editMessageTextarea");
-      if (t) t.value = this.finalMessage;
+      document.getElementById("editMessageTextarea").value = this.finalMessage;
       this.toggleEditModal(true);
     }
 
     saveEdit() {
-      const t = document.getElementById("editMessageTextarea");
-      if (t) {
-        this.finalMessage = t.value;
-        const mp = document.getElementById("messagePreview");
-        if (mp) mp.textContent = this.finalMessage;
-        this.toggleEditModal(false);
-        this.showToast("Mensagem atualizada.", "success");
-      }
+      this.finalMessage = document.getElementById("editMessageTextarea").value;
+      document.getElementById("messagePreview").textContent = this.finalMessage;
+      this.toggleEditModal(false);
+      this.showToast("Mensagem atualizada.", "success");
     }
 
     makeDraggable(element) {
       let isDragging = false;
       let startX, startY, initialTop, initialRight;
+
       element.addEventListener('mousedown', startDrag);
       document.addEventListener('mousemove', drag);
       document.addEventListener('mouseup', endDrag);
+
       element.addEventListener('touchstart', startDrag, { passive: false });
       document.addEventListener('touchmove', drag, { passive: false });
       document.addEventListener('touchend', endDrag);
@@ -2308,11 +2408,16 @@
     }
 
     handleGlobalKeydown(e) {
-      if (e.key === "Escape" && document.getElementById("automationModal")?.classList.contains("ua-show"))
+      if (
+        e.key === "Escape" &&
+        document.getElementById("automationModal").classList.contains("ua-show")
+      )
         this.toggleModal(false);
       if (e.ctrlKey && (e.key === " " || e.code === "Space")) {
         e.preventDefault();
-        this.toggleModal(!document.getElementById("automationModal")?.classList.contains("ua-show"));
+        this.toggleModal(
+          !document.getElementById("automationModal").classList.contains("ua-show")
+        );
       }
     }
 
@@ -2332,17 +2437,28 @@
     logStep(message, status = 'info') {
       const prefix = "[UA Log]";
       switch (status) {
-        case 'success': console.log(`%c${prefix} ✅ ${message}`, 'color: #10b981; font-weight: bold;'); break;
-        case 'error': console.error(`${prefix} ❌ ${message}`); break;
-        case 'wait': console.log(`%c${prefix} ⏳ ${message}`, 'color: #f59e0b;'); break;
-        default: console.info(`%c${prefix} ➡️ ${message}`, 'color: #3b82f6;'); break;
+        case 'success':
+          console.log(`%c${prefix} ✅ ${message}`, 'color: #10b981; font-weight: bold;');
+          break;
+        case 'error':
+          console.error(`${prefix} ❌ ${message}`);
+          break;
+        case 'wait':
+          console.log(`%c${prefix} ⏳ ${message}`, 'color: #f59e0b;');
+          break;
+        case 'info':
+        default:
+          console.info(`%c${prefix} ➡️ ${message}`, 'color: #3b82f6;');
+          break;
       }
     }
 
-    // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO COM RE-CLIQUE PROBLEMA) =========
+    // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO) =========
     async executeAutomation() {
       if (!this.selectedItem || this.isLoading) return;
+
       this.logStep("================ INICIANDO AUTOMAÇÃO ================", "info");
+
       const sendButton = document.getElementById("sendButton");
       this.setLoading(true, sendButton, "📤 Enviar");
       this.toggleModal(false);
@@ -2358,16 +2474,16 @@
         find: async (s, xpath = false, t = TIMING.ELEMENT_TIMEOUT) => {
           log(`Buscando elemento: '${s}' (XPath: ${xpath})`);
           const startTime = Date.now();
-          while (Date.now() - startTime < t) {
-            const el = xpath
-              ? document.evaluate(s, document, null, 9, null).singleNodeValue
-              : document.querySelector(s);
-            if (el) {
-              log(`Elemento encontrado: '${s}'`, 'success');
-              return el;
+            while (Date.now() - startTime < t) {
+              const el = xpath
+                ? document.evaluate(s, document, null, 9, null).singleNodeValue
+                : document.querySelector(s);
+              if (el) {
+                log(`Elemento encontrado: '${s}'`, 'success');
+                return el;
+              }
+              await new Promise(res => setTimeout(res, 200));
             }
-            await new Promise(res => setTimeout(res, 200));
-          }
             log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
             return null;
         },
@@ -2401,41 +2517,48 @@
 
       const handleNzSelect = async ({ inputSelector, valueToType, optionText }) => {
         log(`Iniciando seleção em dropdown (antd). Opção: '${optionText}'`);
-        if (!(await h.click(inputSelector, true)))
+
+        if (!(await h.click(inputSelector, true))) {
           throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
-        if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true)))
+        }
+
+        if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true))) {
           throw new Error("Dropdown do select não apareceu.");
+        }
+
         if (valueToType) {
-          if (!(await h.type(inputSelector, valueToType, true)))
+          if (!(await h.type(inputSelector, valueToType, true))) {
             throw new Error(`Não foi possível digitar em: ${inputSelector}`);
+          }
           await h.wait(TIMING.FILTER_WAIT);
         }
-        const optionSelector =
-          `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
-        if (!(await h.click(optionSelector, true)))
+
+        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
+        if (!(await h.click(optionSelector, true))) {
           throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
+        }
+
         log(`Opção '${optionText}' selecionada com sucesso.`, 'success');
       };
 
       const handleDependentProblemService = async (problemText, serviceText) => {
         log("=== Iniciando seleção dependente Problema → Serviço ===", 'info');
+
         log(`Selecionando problema: '${problemText}'`);
         await handleNzSelect({
           inputSelector: SELECTORS.PROBLEM_SELECT,
           valueToType: problemText,
-          optionText: problemText,
+            optionText: problemText,
         });
 
         if (serviceText && serviceText.trim() !== '') {
           log("Aguardando habilitação do campo de serviço...", 'wait');
           await h.wait(TIMING.DEFAULT_WAIT);
-          const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
-          if (!serviceElement) throw new Error("Campo de serviço não foi habilitado dentro do tempo limite");
 
-          // >>> NOVO PASSO: re-clicar no campo de problema antes de abrir o serviço
-          log("Re-clicando no campo de problema para garantir fechamento do dropdown antes do serviço.", 'info');
-          await h.click(SELECTORS.PROBLEM_SELECT, true);
-          await h.wait(120);
+          const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
+          if (!serviceElement) {
+            throw new Error("Campo de serviço não foi habilitado dentro do tempo limite");
+          }
 
           log(`Selecionando serviço: '${serviceText}'`);
           await handleNzSelect({
@@ -2443,6 +2566,7 @@
             valueToType: serviceText,
             optionText: serviceText,
           });
+
           log("=== Seleção dependente concluída com sucesso ===", 'success');
         } else {
           log("Nenhum serviço configurado - pulando seleção de serviço");
@@ -2450,6 +2574,7 @@
       };
 
       try {
+        // Etapa 1: Mensagem principal
         log("Etapa 1: Inserir mensagem principal.");
         if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
           log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
@@ -2458,8 +2583,8 @@
         if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage)))
           throw new Error("Não foi possível digitar na área de texto.");
 
-        if (document.getElementById("importantCheckbox")?.checked) {
-          log("Chamado marcado como importante. Clicando no botão de importância.");
+        if (document.getElementById("importantCheckbox").checked) {
+          log("Chamado marcado como importante. Tentando clicar no botão de importância.");
           await h.click(SELECTORS.IMPORTANT_BUTTON);
         }
 
@@ -2467,27 +2592,31 @@
           throw new Error("Não foi possível clicar no envio principal.");
         await h.wait(TIMING.DEFAULT_WAIT);
 
+        // Etapa 2: Tag interna
         if (this.selectedItem.etiquetaInterna) {
           log("Etapa 2: Aplicar tag interna.");
-            if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
-              await handleNzSelect({
-                inputSelector: SELECTORS.TAG_INPUT,
-                valueToType: this.selectedItem.etiquetaInterna,
-                optionText: this.selectedItem.etiquetaInterna,
-              });
-              await h.click("[data-testid='btn-Concluir']");
-            } else {
-              log("Botão de adicionar tag não encontrado, pulando etapa.", 'wait');
-            }
+          if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
+            await handleNzSelect({
+              inputSelector: SELECTORS.TAG_INPUT,
+              valueToType: this.selectedItem.etiquetaInterna,
+              optionText: this.selectedItem.etiquetaInterna,
+            });
+            await h.click("[data-testid='btn-Concluir']");
+          } else {
+            log("Botão de adicionar tag não encontrado, pulando etapa.", 'wait');
+          }
         }
 
+        // Etapa 3: Fluxo externo dependente
         if (this.selectedItem.externo) {
           log("Etapa 3: Iniciar fluxo de encaminhamento externo com seleção dependente.");
           await h.click(SELECTORS.FORWARD_BUTTON);
-          if (document.getElementById("externalCallCheckbox")?.checked) {
+
+          if (document.getElementById("externalCallCheckbox").checked) {
             log("Opção 'Aguardar chamado externo' selecionada.");
             await h.click("//lib-input-switch//button", true);
           }
+
           log("Selecionando setor 'suporte externo'.");
           await handleNzSelect({
             inputSelector: SELECTORS.SECTOR_SELECT,
@@ -2502,7 +2631,7 @@
           await h.click("[data-testid='btn-Continuar']");
           log("Fluxo de encaminhamento externo finalizado.", 'success');
 
-        } else if (document.getElementById("reminderCheckbox")?.checked) {
+        } else if (document.getElementById("reminderCheckbox").checked) {
           log("Etapa 3: Adicionar lembrete.");
           if (await h.click(SELECTORS.MORE_BUTTON)) {
             await h.click("//nz-list-item[span[text()='Adicionar lembrete']]", true);
@@ -2512,14 +2641,15 @@
           }
         } else {
           log("Etapa 3: Finalizar atendimento (padrão).");
-          if (await h.click(SELECTORS.MORE_BUTTON)) {
-            await h.click("//nz-list-item[span[text()='Finalizar']]", true);
-            log("Atendimento finalizado com sucesso.", 'success');
-          }
+            if (await h.click(SELECTORS.MORE_BUTTON)) {
+              await h.click("//nz-list-item[span[text()='Finalizar']]", true);
+              log("Atendimento finalizado com sucesso.", 'success');
+            }
         }
 
         this.showToast("Automação concluída com sucesso!", "success");
         log("================ AUTOMAÇÃO CONCLUÍDA ================", "success");
+
       } catch (error) {
         log(`ERRO na automação: ${error.message}`, "error");
         console.error("Stacktrace do erro:", error);
@@ -2532,6 +2662,7 @@
     }
   }
 
+  // Exportações (caso usado em ambiente de testes externos / bundlers)
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       handleDependentServiceSelection,
@@ -2540,7 +2671,5 @@
     };
   }
 
-  new AttendanceAutomation();
-})();
   new AttendanceAutomation();
 })();
