@@ -1582,10 +1582,189 @@
     </div>
 </div>`;
 
-  // ═══════════════════════════════════════════════════════════════════
-  // 🧠 CLASSE PRINCIPAL - AUTOMAÇÃO DE ATENDIMENTO (Enhanced)
-  // ═══════════════════════════════════════════════════════════════════
-   class AttendanceAutomation {
+// ═════════════════════════════════════════════════════════════════
+  // ✅ NOVAS FUNÇÕES (Sem testes)
+  // ═════════════════════════════════════════════════════════════════
+
+  // Aguarda até que um elemento (select) esteja habilitado (não possua classe de disabled)
+  const waitForElementEnabled = async (selector, isXPath = false, timeout = 10000) => {
+    const log = (msg, status = 'info') => {
+      const prefix = "[Service Selection]";
+      switch (status) {
+        case 'success': console.log(`%c${prefix} ✅ ${msg}`, 'color: #10b981; font-weight: bold;'); break;
+        case 'error': console.error(`${prefix} ❌ ${msg}`); break;
+        case 'wait': console.log(`%c${prefix} ⏳ ${msg}`, 'color: #f59e0b;'); break;
+        default: console.info(`%c${prefix} ➡️ ${msg}`, 'color: #3b82f6;'); break;
+      }
+    };
+
+    log(`Aguardando elemento ser habilitado: '${selector}'`, 'wait');
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeout) {
+      try {
+        const element = isXPath
+          ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+          : document.querySelector(selector);
+
+        if (element) {
+          const isDisabled =
+            element.closest('nz-select')?.classList.contains('ant-select-disabled') ||
+            element.classList.contains('ant-select-disabled') ||
+            element.disabled;
+
+            if (!isDisabled) {
+              log(`Elemento habilitado encontrado: '${selector}'`, 'success');
+              return element;
+            }
+        }
+        await new Promise(r => setTimeout(r, 200));
+      } catch (err) {
+        log(`Erro ao verificar elemento: ${err.message}`, 'error');
+        await new Promise(r => setTimeout(r, 200));
+      }
+    }
+    log(`Timeout: Elemento não habilitado após ${timeout}ms: '${selector}'`, 'error');
+    return null;
+  };
+
+  // Lida com seleção dependente problema -> serviço em selects do Ant Design
+  const handleDependentServiceSelection = async ({
+    problemSelector,
+    serviceSelector,
+    problemValue,
+    serviceValue,
+    optionSelectorTemplate = "//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{value}')]",
+    genericDropdownSelector = "//div[contains(@class, 'ant-select-dropdown') and not(contains(@class, 'ant-select-dropdown-hidden'))]//ul[contains(@class, 'ant-select-dropdown-menu')]",
+    timing = { clickWait: 300, typeWait: 200, enableWait: 1000, filterWait: 400 }
+  }) => {
+
+    const log = (msg, status = 'info') => {
+      const prefix = "[Dependent Service]";
+      switch (status) {
+        case 'success': console.log(`%c${prefix} ✅ ${msg}`, 'color: #10b981; font-weight: bold;'); break;
+        case 'error': console.error(`${prefix} ❌ ${msg}`); break;
+        case 'wait': console.log(`%c${prefix} ⏳ ${msg}`, 'color: #f59e0b;'); break;
+        default: console.info(`%c${prefix} ➡️ ${msg}`, 'color: #3b82f6;'); break;
+      }
+    };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    const findElement = async (selector, xpath = false, timeout = 5000) => {
+      const start = Date.now();
+      while (Date.now() - start < timeout) {
+        const el = xpath
+          ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+          : document.querySelector(selector);
+        if (el) return el;
+        await wait(200);
+      }
+      return null;
+    };
+
+    const clickElement = async (selector, xpath = false) => {
+      const el = await findElement(selector, xpath);
+      if (el) {
+        el.click();
+        await wait(timing.clickWait);
+        return true;
+      }
+      return false;
+    };
+
+    const typeInElement = async (selector, text, xpath = false) => {
+      const el = await findElement(selector, xpath);
+      if (el) {
+        el.value = text;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        await wait(timing.typeWait);
+        return true;
+      }
+      return false;
+    };
+
+    try {
+      // Problema
+      log(`Selecionando problema: '${problemValue}'`);
+      if (!await clickElement(problemSelector, true))
+        throw new Error(`Clique falhou em: ${problemSelector}`);
+
+      if (!await findElement(genericDropdownSelector, true))
+        throw new Error("Dropdown do problema não apareceu");
+
+      if (!await typeInElement(problemSelector, problemValue, true))
+        throw new Error("Falha ao digitar no campo de problema");
+
+      await wait(timing.filterWait);
+
+      const problemOptionSelector = optionSelectorTemplate.replace('{value}', problemValue.toLowerCase());
+      if (!await clickElement(problemOptionSelector, true))
+        throw new Error(`Opção de problema não encontrada: ${problemValue}`);
+
+      log(`Problema '${problemValue}' selecionado.`, 'success');
+
+      // Serviço dependente
+      log("Aguardando habilitação do serviço...", 'wait');
+      await wait(timing.enableWait);
+
+      const serviceEl = await waitForElementEnabled(serviceSelector, true, 10000);
+      if (!serviceEl)
+        throw new Error("Campo de serviço não habilitou");
+
+      if (serviceValue && serviceValue.trim() !== '') {
+        log(`Selecionando serviço: '${serviceValue}'`);
+        if (!await clickElement(serviceSelector, true))
+          throw new Error("Falha ao clicar no campo de serviço");
+
+        if (!await findElement(genericDropdownSelector, true))
+          throw new Error("Dropdown do serviço não apareceu");
+
+        if (!await typeInElement(serviceSelector, serviceValue, true))
+          throw new Error("Falha ao digitar no serviço");
+
+        await wait(timing.filterWait);
+
+        const serviceOptionSelector = optionSelectorTemplate.replace('{value}', serviceValue.toLowerCase());
+        if (!await clickElement(serviceOptionSelector, true))
+          throw new Error(`Opção de serviço não encontrada: ${serviceValue}`);
+
+        log(`Serviço '${serviceValue}' selecionado.`, 'success');
+      } else {
+        log("Nenhum serviço configurado - etapa ignorada.");
+      }
+
+      return { success: true, message: "Seleção dependente concluída" };
+
+    } catch (error) {
+      log(`Erro: ${error.message}`, 'error');
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Integra no fluxo existente (uso genérico)
+  const executeServiceSelection = async (selectedItem, selectors, timing) => {
+    if (!selectedItem.externo || !selectedItem.servicoExterno) {
+      return { success: true, message: "Nenhum serviço externo configurado" };
+    }
+    return await handleDependentServiceSelection({
+      problemSelector: selectors.PROBLEM_SELECT,
+      serviceSelector: selectors.SERVICE_SELECT,
+      problemValue: selectedItem.etiquetaExterna,
+      serviceValue: selectedItem.servicoExterno,
+      timing: {
+        clickWait: timing.CLICK_WAIT,
+        typeWait: timing.TYPE_WAIT,
+        enableWait: timing.DEFAULT_WAIT,
+        filterWait: timing.FILTER_WAIT
+      }
+    });
+  };
+
+  // ═════════════════════════════════════════════════════════════════
+  // 🧠 CLASSE PRINCIPAL
+  // ═════════════════════════════════════════════════════════════════
+  class AttendanceAutomation {
     constructor() {
       this.allItems = [];
       this.filteredItems = [];
@@ -1646,17 +1825,14 @@
         .getElementById("dropdown")
         .addEventListener("click", this.handleDropdownClick.bind(this));
 
-      // Enhanced accordion event listeners
       document
         .getElementById("filterAccordionHeader")
         .addEventListener("click", this.toggleFilterAccordion.bind(this));
 
-      // Filter event listeners
       document
         .getElementById("clearFiltersBtn")
         .addEventListener("click", this.clearAllFilters.bind(this));
 
-      // Enhanced specifications event listeners
       [
         "holderCheckbox",
         "speakerInput",
@@ -1670,7 +1846,7 @@
           .getElementById(id)
           .addEventListener("input", this.updatePreview.bind(this))
       );
-      
+
       document
         .getElementById("editButton")
         .addEventListener("click", this.openEditModal.bind(this));
@@ -1685,29 +1861,20 @@
         .addEventListener("click", () => this.toggleEditModal(false));
       document.addEventListener("keydown", this.handleGlobalKeydown.bind(this));
 
-      // ============================
-      // Clique global: checkmark e container
-      // - Se clicar na .ua-checkmark, alterna o checkbox associado e dispara 'input' e 'change'
-      // - Se clicar na .ua-checkbox-container (fora do input/label/checkmark), alterna o checkbox
-      // ============================
+      // Clique em checkmark e container customizados
       document.addEventListener("click", (e) => {
         try {
-          // 1) Clique na checkmark
-          if (e.target && e.target.classList && e.target.classList.contains("ua-checkmark")) {
+          if (e.target?.classList?.contains("ua-checkmark")) {
             const checkbox = e.target.previousElementSibling;
-            if (checkbox && checkbox.type === "checkbox") {
+            if (checkbox?.type === "checkbox") {
               checkbox.checked = !checkbox.checked;
-              // garantir que listeners 'input' e 'change' sejam acionados (updatePreview usa 'input')
               checkbox.dispatchEvent(new Event("input", { bubbles: true }));
               checkbox.dispatchEvent(new Event("change", { bubbles: true }));
             }
             return;
           }
-
-          // 2) Clique no container (.ua-checkbox-container)
-          const container = e.target.closest && e.target.closest(".ua-checkbox-container");
+          const container = e.target.closest?.(".ua-checkbox-container");
           if (container) {
-            // se o click foi em input, label ou checkmark, ignorar (comportamento nativo/handlers já tratam)
             if (e.target.closest("input") || e.target.closest("label") || e.target.closest(".ua-checkmark")) return;
             const checkbox = container.querySelector('input[type="checkbox"]');
             if (checkbox) {
@@ -1718,21 +1885,16 @@
             return;
           }
         } catch (err) {
-          // não bloquear a execução em caso de erro
           console.error("[UA] Erro no listener global de click:", err);
         }
       });
-
     }
 
-    // New method to setup accordion functionality for right panel
     setupAccordionFunctionality() {
-      // Make toggleAccordion available globally for onclick handlers
       window.toggleAccordion = (cardId) => {
         this.accordionStates[cardId] = !this.accordionStates[cardId];
         const content = document.getElementById(`${cardId}Content`);
         const icon = document.getElementById(`${cardId}Icon`);
-        
         content.classList.toggle("ua-expanded", this.accordionStates[cardId]);
         icon.classList.toggle("ua-expanded", this.accordionStates[cardId]);
       };
@@ -1740,7 +1902,7 @@
 
     async loadData() {
       const btn = document.getElementById("automationFloatingBtn");
-      const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-240h560v-400H200v400Z"/></svg>`;
+      const iconSVG = "⚙️";
       try {
         this.setLoading(true, btn);
         const response = await fetch(CONFIG.GITHUB_JSON_URL);
@@ -1750,7 +1912,7 @@
         this.allItems = data.problemas || [];
         if (this.allItems.length === 0)
           throw new Error("Nenhum problema encontrado no JSON");
-        
+
         this.setupFilters();
         this.filteredItems = [...this.allItems];
         this.showToast("Automação carregada.", "success");
@@ -1763,14 +1925,13 @@
     }
 
     setupFilters() {
-      // Extract unique filters from all items
       const allFilters = new Set();
       this.allItems.forEach(item => {
         if (item.filtro && Array.isArray(item.filtro)) {
           item.filtro.forEach(filter => allFilters.add(filter));
         }
       });
-      
+
       this.availableFilters = Array.from(allFilters).sort();
       this.renderFilterOptions();
       this.updateFilterCount();
@@ -1779,7 +1940,7 @@
     renderFilterOptions() {
       const filterOptions = document.getElementById("filterOptions");
       filterOptions.innerHTML = "";
-      
+
       this.availableFilters.forEach(filter => {
         const filterOption = document.createElement("label");
         filterOption.className = "ua-filter-option";
@@ -1788,12 +1949,12 @@
           <span class="ua-checkmark"></span>
           <span class="ua-filter-label">${filter}</span>
         `;
-        
+
         const checkbox = filterOption.querySelector('input[type="checkbox"]');
         checkbox.addEventListener("change", (e) => {
           this.handleFilterChange(filter, e.target.checked);
         });
-        
+
         filterOptions.appendChild(filterOption);
       });
     }
@@ -1802,7 +1963,7 @@
       this.isFilterExpanded = !this.isFilterExpanded;
       const content = document.getElementById("filterAccordionContent");
       const icon = document.getElementById("filterAccordionIcon");
-      
+
       content.classList.toggle("ua-expanded", this.isFilterExpanded);
       icon.classList.toggle("ua-expanded", this.isFilterExpanded);
     }
@@ -1815,7 +1976,7 @@
       } else {
         this.selectedFilters = this.selectedFilters.filter(f => f !== filter);
       }
-      
+
       this.updateFilteredItems();
       this.updateFilterCount();
       this.updateClearFiltersButton();
@@ -1827,19 +1988,17 @@
       } else {
         this.filteredItems = this.allItems.filter(item => {
           if (!item.filtro || !Array.isArray(item.filtro)) return false;
-          return this.selectedFilters.some(selectedFilter => 
+          return this.selectedFilters.some(selectedFilter =>
             item.filtro.includes(selectedFilter)
           );
         });
       }
-      
-      // Clear search if no items match current filters
+
       const searchInput = document.getElementById("searchInput");
       if (this.filteredItems.length === 0) {
         searchInput.value = "";
         this.showDropdown(false);
       } else if (searchInput.value.trim()) {
-        // Refresh search results with new filtered items
         this.handleSearch({ target: searchInput });
       }
     }
@@ -1853,13 +2012,9 @@
 
     clearAllFilters() {
       this.selectedFilters = [];
-      
-      // Uncheck all filter checkboxes
-      const filterCheckboxes = document.querySelectorAll('#filterOptions input[type="checkbox"]');
-      filterCheckboxes.forEach(checkbox => {
-        checkbox.checked = false;
-      });
-      
+      document
+        .querySelectorAll('#filterOptions input[type="checkbox"]')
+        .forEach(cb => (cb.checked = false));
       this.updateFilteredItems();
       this.updateFilterCount();
       this.updateClearFiltersButton();
@@ -1980,22 +2135,40 @@
       this.hideRightPanelAndFooter();
     }
 
+    validateProblemServiceConfig(item) {
+      const log = this.logStep.bind(this);
+      if (!item.externo) {
+        log("Item não é externo - sem validação de serviço");
+        return true;
+      }
+      if (!item.etiquetaExterna) {
+        log("AVISO: Item externo sem etiqueta externa configurada", 'wait');
+        return false;
+      }
+      if (!item.servicoExterno) {
+        log("AVISO: Item externo sem serviço externo configurado", 'wait');
+      }
+      log(`Config OK - Problema: '${item.etiquetaExterna}', Serviço: '${item.servicoExterno || 'Nenhum'}'`, 'success');
+      return true;
+    }
+
     updateUIForSelectedItem() {
       this.showRightPanelAndFooter();
-      
       document.getElementById("specificationSection").classList.remove("ua-hidden");
-      
+
       const { externo, aguardar, lembrete } = this.selectedItem;
       document
         .getElementById("externalCallLabel")
         .classList.toggle("ua-hidden", !externo);
-      // Set "aguardar chamado" checkbox to unchecked by default
       document.getElementById("externalCallCheckbox").checked = false;
       document
         .getElementById("reminderLabel")
         .classList.toggle("ua-hidden", externo);
       document.getElementById("reminderCheckbox").checked =
         !externo && lembrete;
+
+      this.validateProblemServiceConfig(this.selectedItem);
+
       this.updatePreview();
       this.updateTagPreview();
       this.updateActionPreview();
@@ -2015,178 +2188,129 @@
     }
 
     updatePreview() {
-        if (!this.selectedItem) return;
+      if (!this.selectedItem) return;
 
-        const isHolder = document.getElementById("holderCheckbox").checked;
-        document.getElementById("speakerInfo").classList.toggle("ua-hidden", isHolder);
+      const isHolder = document.getElementById("holderCheckbox").checked;
+      document.getElementById("speakerInfo").classList.toggle("ua-hidden", isHolder);
 
-        const speaker = document.getElementById("speakerInput").value.trim();
-        const relation = document.getElementById("relationshipSelect").value;
-        const obs = document.getElementById("observationsTextarea").value.trim();
+      const speaker = document.getElementById("speakerInput").value.trim();
+      const relation = document.getElementById("relationshipSelect").value;
+      const obs = document.getElementById("observationsTextarea").value.trim();
 
-        const mainMsg = this.selectedItem.mensagem || "";
-        const obsText = obs ? `\n\nObservações:\n${obs}` : "";
+      const mainMsg = this.selectedItem.mensagem || "";
+      const obsText = obs ? `\n\nObservações:\n${obs}` : "";
 
-        let message = "";
+      let message = "";
 
-        if (isHolder) {
-            // Caso 1: Fala com o titular.
-            message = `O titular ${mainMsg}${obsText}`;
-        } else {
-            if (speaker) {
-                // Caso 2: Não é o titular, mas o nome de quem fala foi preenchido.
-                const relationshipText = relation ? ` (${relation})` : ` (Não informado)`;
-                message = `${speaker}${relationshipText}\n\n${mainMsg}${obsText}`;
-            } else {
-                // Caso 3: Não é o titular e o nome não foi preenchido.
-                message = `O cliente ${mainMsg}${obsText}`;
-            }
-        }
+      if (isHolder) {
+        message = `O titular ${mainMsg}${obsText}`;
+      } else if (speaker) {
+        const relationshipText = relation ? ` (${relation})` : ` (Não informado)`;
+        message = `${speaker}${relationshipText}\n\n${mainMsg}${obsText}`;
+      } else {
+        message = `O cliente ${mainMsg}${obsText}`;
+      }
 
-        this.finalMessage = message;
-        this.updateMessagePreview();
-        this.updateTagPreview();
-        this.updateActionPreview();
+      this.finalMessage = message;
+      this.updateMessagePreview();
+      this.updateTagPreview();
+      this.updateActionPreview();
     }
 
     updateMessagePreview() {
-        const messagePreview = document.getElementById("messagePreview");
-        messagePreview.textContent = this.finalMessage;
-        
-        // Update message statistics
-        const charCount = this.finalMessage.length;
-        const wordCount = this.finalMessage.trim().split(/\s+/).filter(word => word.length > 0).length;
-        
-        const messageStats = messagePreview.parentElement.querySelector('.ua-message-stats');
-        if (messageStats) {
-            messageStats.querySelector('.ua-char-count').innerHTML = `
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                </svg>
-                ${charCount} caracteres
-            `;
-            messageStats.querySelector('.ua-word-count').innerHTML = `
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-                ${wordCount} palavras
-            `;
-        }
+      const messagePreview = document.getElementById("messagePreview");
+      messagePreview.textContent = this.finalMessage;
+
+      const charCount = this.finalMessage.length;
+      const wordCount = this.finalMessage.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+      const messageStats = messagePreview.parentElement.querySelector('.ua-message-stats');
+      if (messageStats) {
+        messageStats.querySelector('.ua-char-count').innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+          </svg>
+          ${charCount} caracteres
+        `;
+        messageStats.querySelector('.ua-word-count').innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          ${wordCount} palavras
+        `;
+      }
     }
+
     updateTagPreview() {
       if (!this.selectedItem) return;
-      
       const tagPreview = document.getElementById("tagPreview");
       const tagGrid = tagPreview.querySelector(".ua-tag-grid");
-      
       let tags = [];
-      
-      // Add internal tag if exists
+
       if (this.selectedItem.etiquetaInterna) {
-        tags.push({
-          text: this.selectedItem.etiquetaInterna,
-          type: 'internal',
-          category: 'Interna'
-        });
+        tags.push({ text: this.selectedItem.etiquetaInterna, type: 'internal', category: 'Interna' });
       }
-      
-      // Add external tag if exists
+
       if (this.selectedItem.externo && this.selectedItem.etiquetaExterna) {
-        tags.push({
-          text: this.selectedItem.etiquetaExterna,
-          type: 'external',
-          category: 'Externa'
-        });
+        tags.push({ text: this.selectedItem.etiquetaExterna, type: 'external', category: 'Externa' });
       }
-      
-      // Add service tag if exists
+
       if (this.selectedItem.servicoExterno) {
-        tags.push({
-          text: this.selectedItem.servicoExterno,
-          type: 'service',
-          category: 'Serviço'
-        });
+        tags.push({ text: this.selectedItem.servicoExterno, type: 'service', category: 'Serviço' });
       }
-      
+
       if (tags.length > 0) {
-        // Group tags by category
-        const groupedTags = tags.reduce((groups, tag) => {
-          if (!groups[tag.category]) groups[tag.category] = [];
-          groups[tag.category].push(tag);
-          return groups;
+        const grouped = tags.reduce((acc, tag) => {
+          (acc[tag.category] = acc[tag.category] || []).push(tag);
+          return acc;
         }, {});
-        
-        tagGrid.innerHTML = Object.entries(groupedTags).map(([category, categoryTags]) => `
+        tagGrid.innerHTML = Object.entries(grouped).map(([cat, arr]) => `
           <div class="ua-tag-group">
-            <div class="ua-tag-group-title">${category}</div>
+            <div class="ua-tag-group-title">${cat}</div>
             <div class="ua-tag-list">
-              ${categoryTags.map(tag => `<span class="ua-tag-item ${tag.type}">${tag.text}</span>`).join('')}
+              ${arr.map(t => `<span class="ua-tag-item ${t.type}">${t.text}</span>`).join('')}
             </div>
           </div>
         `).join('');
         tagPreview.classList.remove("ua-hidden");
       } else {
-        tagGrid.innerHTML = `
-          <div class="ua-empty-state">
-            <svg class="ua-empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 1v6m6-6v6"></path>
-            </svg>
-            <div class="ua-empty-state-text">Nenhuma tag será aplicada</div>
-          </div>
-        `;
+        tagGrid.innerHTML = `<div class="ua-empty-state">
+          <svg class="ua-empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 1v6m6-6v6"></path>
+          </svg>
+          <div class="ua-empty-state-text">Nenhuma tag será aplicada</div>
+        </div>`;
         tagPreview.classList.add("ua-hidden");
       }
     }
 
     updateActionPreview() {
       if (!this.selectedItem) return;
-      
       const actionPreview = document.getElementById("actionPreview");
       const actionList = actionPreview.querySelector(".ua-action-list");
-      
       let actions = [];
-      
-      // Check for important checkbox
+
       if (document.getElementById("importantCheckbox").checked) {
-        actions.push({
-          text: "Marcar como chamado importante",
-          icon: "alert-circle"
-        });
+        actions.push({ text: "Marcar como chamado importante", icon: "alert-circle" });
       }
-      
-      // Check for external forwarding
+
       if (this.selectedItem.externo) {
-        actions.push({
-          text: "Encaminhar para suporte externo",
-          icon: "external-link"
-        });
-        
+        actions.push({ text: "Encaminhar para suporte externo", icon: "external-link" });
         if (document.getElementById("externalCallCheckbox").checked) {
-          actions.push({
-            text: "Aguardar chamado externo",
-            icon: "clock"
-          });
+          actions.push({ text: "Aguardar chamado externo", icon: "clock" });
         }
       }
-      
-      // Check for reminder
+
       if (!this.selectedItem.externo && document.getElementById("reminderCheckbox").checked) {
-        actions.push({
-          text: "Adicionar lembrete de retorno",
-          icon: "bell"
-        });
+        actions.push({ text: "Adicionar lembrete de retorno", icon: "bell" });
       }
-      
-      // Default action
+
       if (!this.selectedItem.externo && !document.getElementById("reminderCheckbox").checked) {
-        actions.push({
-          text: "Finalizar atendimento",
-          icon: "check-circle"
-        });
+        actions.push({ text: "Finalizar atendimento", icon: "check-circle" });
       }
-      
+
       const getIconSVG = (iconName) => {
         const icons = {
           'alert-circle': '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>',
@@ -2197,9 +2321,9 @@
         };
         return `<svg class="ua-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[iconName] || icons['check-circle']}</svg>`;
       };
-      
+
       if (actions.length > 0) {
-        actionList.innerHTML = actions.map(action => 
+        actionList.innerHTML = actions.map(action =>
           `<div class="ua-action-item">
             ${getIconSVG(action.icon)}
             <span>${action.text}</span>
@@ -2207,16 +2331,14 @@
         ).join('');
         actionPreview.classList.remove("ua-hidden");
       } else {
-        actionList.innerHTML = `
-          <div class="ua-empty-state">
-            <svg class="ua-empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="15" y1="9" x2="9" y2="15"></line>
-              <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
-            <div class="ua-empty-state-text">Nenhuma ação será executada</div>
-          </div>
-        `;
+        actionList.innerHTML = `<div class="ua-empty-state">
+          <svg class="ua-empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <div class="ua-empty-state-text">Nenhuma ação será executada</div>
+        </div>`;
         actionPreview.classList.add("ua-hidden");
       }
     }
@@ -2234,64 +2356,55 @@
     }
 
     makeDraggable(element) {
-        let isDragging = false;
-        let startX, startY, initialTop, initialRight;
+      let isDragging = false;
+      let startX, startY, initialTop, initialRight;
 
-        element.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', endDrag);
+      element.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', endDrag);
 
-        element.addEventListener('touchstart', startDrag, { passive: false });
-        document.addEventListener('touchmove', drag, { passive: false });
-        document.addEventListener('touchend', endDrag);
+      element.addEventListener('touchstart', startDrag, { passive: false });
+      document.addEventListener('touchmove', drag, { passive: false });
+      document.addEventListener('touchend', endDrag);
 
-        function startDrag(e) {
-            if (e.type === 'mousedown' && e.button !== 0) return;
-            
-            e.preventDefault();
-            isDragging = true;
-            element.classList.add('ua-dragging');
-            element.style.userSelect = 'none';
+      function startDrag(e) {
+        if (e.type === 'mousedown' && e.button !== 0) return;
+        e.preventDefault();
+        isDragging = true;
+        element.classList.add('ua-dragging');
+        element.style.userSelect = 'none';
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        startX = clientX;
+        startY = clientY;
+        const rect = element.getBoundingClientRect();
+        initialTop = rect.top;
+        initialRight = window.innerWidth - rect.right;
+      }
 
-            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+      function drag(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        const deltaX = clientX - startX;
+        const deltaY = clientY - startY;
+        let newTop = initialTop + deltaY;
+        let newRight = initialRight - deltaX;
+        const rect = element.getBoundingClientRect();
+        newTop = Math.max(0, Math.min(newTop, window.innerHeight - rect.height));
+        newRight = Math.max(0, Math.min(newRight, window.innerWidth - rect.width));
+        element.style.left = 'auto';
+        element.style.right = `${newRight}px`;
+        element.style.top = `${newTop}px`;
+      }
 
-            startX = clientX;
-            startY = clientY;
-            
-            const rect = element.getBoundingClientRect();
-            initialTop = rect.top;
-            initialRight = window.innerWidth - rect.right;
-        }
-
-        function drag(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-
-            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-
-            const deltaX = clientX - startX;
-            const deltaY = clientY - startY;
-
-            let newTop = initialTop + deltaY;
-            let newRight = initialRight - deltaX;
-            
-            const rect = element.getBoundingClientRect();
-            newTop = Math.max(0, Math.min(newTop, window.innerHeight - rect.height));
-            newRight = Math.max(0, Math.min(newRight, window.innerWidth - rect.width));
-
-            element.style.left = 'auto';
-            element.style.right = `${newRight}px`;
-            element.style.top = `${newTop}px`;
-        }
-
-        function endDrag() {
-            if (!isDragging) return;
-            isDragging = false;
-            element.classList.remove('ua-dragging');
-            element.style.userSelect = '';
-        }
+      function endDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        element.classList.remove('ua-dragging');
+        element.style.userSelect = '';
+      }
     }
 
     handleGlobalKeydown(e) {
@@ -2320,41 +2433,37 @@
         setTimeout(() => t.remove(), 500);
       }, CONFIG.TIMING.TOAST_DURATION);
     }
-    
-    // ===================================================================
-    // 💡 NOVA FUNÇÃO DE LOGGING
-    // ===================================================================
+
     logStep(message, status = 'info') {
-        const prefix = "[UA Log]";
-        switch (status) {
-            case 'success':
-                console.log(`%c${prefix} ✅ ${message}`, 'color: #10b981; font-weight: bold;');
-                break;
-            case 'error':
-                console.error(`${prefix} ❌ ${message}`);
-                break;
-            case 'wait':
-                console.log(`%c${prefix} ⏳ ${message}`, 'color: #f59e0b;');
-                break;
-            case 'info':
-            default:
-                console.info(`%c${prefix} ➡️ ${message}`, 'color: #3b82f6;');
-                break;
-        }
+      const prefix = "[UA Log]";
+      switch (status) {
+        case 'success':
+          console.log(`%c${prefix} ✅ ${message}`, 'color: #10b981; font-weight: bold;');
+          break;
+        case 'error':
+          console.error(`${prefix} ❌ ${message}`);
+          break;
+        case 'wait':
+          console.log(`%c${prefix} ⏳ ${message}`, 'color: #f59e0b;');
+          break;
+        case 'info':
+        default:
+          console.info(`%c${prefix} ➡️ ${message}`, 'color: #3b82f6;');
+          break;
+      }
     }
 
+    // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO) =========
     async executeAutomation() {
       if (!this.selectedItem || this.isLoading) return;
 
       this.logStep("================ INICIANDO AUTOMAÇÃO ================", "info");
-      
+
       const sendButton = document.getElementById("sendButton");
       this.setLoading(true, sendButton, "📤 Enviar");
       this.toggleModal(false);
 
       const { SELECTORS, TIMING } = CONFIG;
-      
-      // Criar uma instância 'bound' da função de log para usar nos helpers
       const log = this.logStep.bind(this);
 
       const h = {
@@ -2365,18 +2474,18 @@
         find: async (s, xpath = false, t = TIMING.ELEMENT_TIMEOUT) => {
           log(`Buscando elemento: '${s}' (XPath: ${xpath})`);
           const startTime = Date.now();
-          while (Date.now() - startTime < t) {
-            const el = xpath
-              ? document.evaluate(s, document, null, 9, null).singleNodeValue
-              : document.querySelector(s);
-            if (el) {
-              log(`Elemento encontrado: '${s}'`, 'success');
-              return el;
+            while (Date.now() - startTime < t) {
+              const el = xpath
+                ? document.evaluate(s, document, null, 9, null).singleNodeValue
+                : document.querySelector(s);
+              if (el) {
+                log(`Elemento encontrado: '${s}'`, 'success');
+                return el;
+              }
+              await new Promise(res => setTimeout(res, 200));
             }
-            await new Promise(res => setTimeout(res, 200));
-          }
-          log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
-          return null;
+            log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
+            return null;
         },
         click: async (s, xpath = false) => {
           log(`Tentando clicar no elemento: '${s}'`);
@@ -2406,47 +2515,84 @@
         },
       };
 
-      const handleNzSelect = async ({
-        inputSelector,
-        valueToType,
-        optionText,
-      }) => {
+      const handleNzSelect = async ({ inputSelector, valueToType, optionText }) => {
         log(`Iniciando seleção em dropdown (antd). Opção: '${optionText}'`);
-        if (!(await h.click(inputSelector, true)))
-          throw new Error(
-            `Não foi possível clicar no input do select: ${inputSelector}`
-          );
-        if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true)))
+
+        if (!(await h.click(inputSelector, true))) {
+          throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
+        }
+
+        if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true))) {
           throw new Error("Dropdown do select não apareceu.");
+        }
+
         if (valueToType) {
-          if (!(await h.type(inputSelector, valueToType, true)))
+          if (!(await h.type(inputSelector, valueToType, true))) {
             throw new Error(`Não foi possível digitar em: ${inputSelector}`);
+          }
           await h.wait(TIMING.FILTER_WAIT);
         }
+
         const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
-        if (!(await h.click(optionSelector, true)))
+        if (!(await h.click(optionSelector, true))) {
           throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
+        }
+
         log(`Opção '${optionText}' selecionada com sucesso.`, 'success');
       };
 
+      const handleDependentProblemService = async (problemText, serviceText) => {
+        log("=== Iniciando seleção dependente Problema → Serviço ===", 'info');
+
+        log(`Selecionando problema: '${problemText}'`);
+        await handleNzSelect({
+          inputSelector: SELECTORS.PROBLEM_SELECT,
+          valueToType: problemText,
+            optionText: problemText,
+        });
+
+        if (serviceText && serviceText.trim() !== '') {
+          log("Aguardando habilitação do campo de serviço...", 'wait');
+          await h.wait(TIMING.DEFAULT_WAIT);
+
+          const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
+          if (!serviceElement) {
+            throw new Error("Campo de serviço não foi habilitado dentro do tempo limite");
+          }
+
+          log(`Selecionando serviço: '${serviceText}'`);
+          await handleNzSelect({
+            inputSelector: SELECTORS.SERVICE_SELECT,
+            valueToType: serviceText,
+            optionText: serviceText,
+          });
+
+          log("=== Seleção dependente concluída com sucesso ===", 'success');
+        } else {
+          log("Nenhum serviço configurado - pulando seleção de serviço");
+        }
+      };
+
       try {
+        // Etapa 1: Mensagem principal
         log("Etapa 1: Inserir mensagem principal.");
         if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
-            log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
-            await h.click(SELECTORS.UPLOAD_BUTTON);
+          log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
+          await h.click(SELECTORS.UPLOAD_BUTTON);
         }
         if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage)))
           throw new Error("Não foi possível digitar na área de texto.");
-        
+
         if (document.getElementById("importantCheckbox").checked) {
-            log("Chamado marcado como importante. Tentando clicar no botão de importância.");
-            await h.click(SELECTORS.IMPORTANT_BUTTON);
+          log("Chamado marcado como importante. Tentando clicar no botão de importância.");
+          await h.click(SELECTORS.IMPORTANT_BUTTON);
         }
-        
+
         if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON)))
           throw new Error("Não foi possível clicar no envio principal.");
         await h.wait(TIMING.DEFAULT_WAIT);
 
+        // Etapa 2: Tag interna
         if (this.selectedItem.etiquetaInterna) {
           log("Etapa 2: Aplicar tag interna.");
           if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
@@ -2461,9 +2607,11 @@
           }
         }
 
+        // Etapa 3: Fluxo externo dependente
         if (this.selectedItem.externo) {
-          log("Etapa 3: Iniciar fluxo de encaminhamento externo.");
+          log("Etapa 3: Iniciar fluxo de encaminhamento externo com seleção dependente.");
           await h.click(SELECTORS.FORWARD_BUTTON);
+
           if (document.getElementById("externalCallCheckbox").checked) {
             log("Opção 'Aguardar chamado externo' selecionada.");
             await h.click("//lib-input-switch//button", true);
@@ -2474,45 +2622,31 @@
             inputSelector: SELECTORS.SECTOR_SELECT,
             optionText: "suporte externo",
           });
-          
-          log(`Selecionando problema: '${this.selectedItem.etiquetaExterna}'.`);
-          await handleNzSelect({
-            inputSelector: SELECTORS.PROBLEM_SELECT,
-            valueToType: this.selectedItem.etiquetaExterna,
-            optionText: this.selectedItem.etiquetaExterna,
-          });
-          
-          await h.wait(TIMING.DEFAULT_WAIT);
 
-          if (this.selectedItem.servicoExterno) {
-            log(`Selecionando serviço: '${this.selectedItem.servicoExterno}'.`);
-            await handleNzSelect({
-              inputSelector: SELECTORS.SERVICE_SELECT,
-              valueToType: this.selectedItem.servicoExterno,
-              optionText: this.selectedItem.servicoExterno,
-            });
-          }
+          await handleDependentProblemService(
+            this.selectedItem.etiquetaExterna,
+            this.selectedItem.servicoExterno
+          );
+
           await h.click("[data-testid='btn-Continuar']");
           log("Fluxo de encaminhamento externo finalizado.", 'success');
 
         } else if (document.getElementById("reminderCheckbox").checked) {
           log("Etapa 3: Adicionar lembrete.");
           if (await h.click(SELECTORS.MORE_BUTTON)) {
-            await h.click(
-              "//nz-list-item[span[text()='Adicionar lembrete']]",
-              true
-            );
+            await h.click("//nz-list-item[span[text()='Adicionar lembrete']]", true);
             await h.type("#titulo", "Fazer retorno");
             await h.click("//button/span[contains(text(), 'Concluir')]", true);
             log("Lembrete adicionado com sucesso.", 'success');
           }
         } else {
           log("Etapa 3: Finalizar atendimento (padrão).");
-          if (await h.click(SELECTORS.MORE_BUTTON)) {
-            await h.click("//nz-list-item[span[text()='Finalizar']]", true);
-            log("Atendimento finalizado com sucesso.", 'success');
-          }
+            if (await h.click(SELECTORS.MORE_BUTTON)) {
+              await h.click("//nz-list-item[span[text()='Finalizar']]", true);
+              log("Atendimento finalizado com sucesso.", 'success');
+            }
         }
+
         this.showToast("Automação concluída com sucesso!", "success");
         log("================ AUTOMAÇÃO CONCLUÍDA ================", "success");
 
@@ -2526,6 +2660,15 @@
         log("Limpeza finalizada e estado inicial restaurado.", "info");
       }
     }
+  }
+
+  // Exportações (caso usado em ambiente de testes externos / bundlers)
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      handleDependentServiceSelection,
+      executeServiceSelection,
+      waitForElementEnabled
+    };
   }
 
   new AttendanceAutomation();
