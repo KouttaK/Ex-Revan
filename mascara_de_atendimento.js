@@ -2343,315 +2343,190 @@
         }
     }
 
-    // Método executeAutomation melhorado para lidar com seleção dependente de serviços
-async executeAutomation() {
-  if (!this.selectedItem || this.isLoading) return;
+    async executeAutomation() {
+      if (!this.selectedItem || this.isLoading) return;
 
-  this.logStep("================ INICIANDO AUTOMAÇÃO ================", "info");
-  
-  const sendButton = document.getElementById("sendButton");
-  this.setLoading(true, sendButton, "📤 Enviar");
-  this.toggleModal(false);
+      this.logStep("================ INICIANDO AUTOMAÇÃO ================", "info");
+      
+      const sendButton = document.getElementById("sendButton");
+      this.setLoading(true, sendButton, "📤 Enviar");
+      this.toggleModal(false);
 
-  const { SELECTORS, TIMING } = CONFIG;
-  const log = this.logStep.bind(this);
+      const { SELECTORS, TIMING } = CONFIG;
+      
+      // Criar uma instância 'bound' da função de log para usar nos helpers
+      const log = this.logStep.bind(this);
 
-  // Helpers básicos
-  const h = {
-    wait: async (ms) => {
-      log(`Aguardando por ${ms}ms...`, 'wait');
-      return new Promise(res => setTimeout(res, ms));
-    },
-    find: async (s, xpath = false, t = TIMING.ELEMENT_TIMEOUT) => {
-      log(`Buscando elemento: '${s}' (XPath: ${xpath})`);
-      const startTime = Date.now();
-      while (Date.now() - startTime < t) {
-        const el = xpath
-          ? document.evaluate(s, document, null, 9, null).singleNodeValue
-          : document.querySelector(s);
-        if (el) {
-          log(`Elemento encontrado: '${s}'`, 'success');
-          return el;
+      const h = {
+        wait: async (ms) => {
+          log(`Aguardando por ${ms}ms...`, 'wait');
+          return new Promise(res => setTimeout(res, ms));
+        },
+        find: async (s, xpath = false, t = TIMING.ELEMENT_TIMEOUT) => {
+          log(`Buscando elemento: '${s}' (XPath: ${xpath})`);
+          const startTime = Date.now();
+          while (Date.now() - startTime < t) {
+            const el = xpath
+              ? document.evaluate(s, document, null, 9, null).singleNodeValue
+              : document.querySelector(s);
+            if (el) {
+              log(`Elemento encontrado: '${s}'`, 'success');
+              return el;
+            }
+            await new Promise(res => setTimeout(res, 200));
+          }
+          log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
+          return null;
+        },
+        click: async (s, xpath = false) => {
+          log(`Tentando clicar no elemento: '${s}'`);
+          const el = await h.find(s, xpath);
+          if (el) {
+            el.click();
+            await h.wait(TIMING.CLICK_WAIT);
+            log(`Clique realizado com sucesso em: '${s}'`, 'success');
+            return true;
+          }
+          log(`Falha ao clicar: elemento não encontrado '${s}'`, 'error');
+          return false;
+        },
+        type: async (s, txt, xpath = false) => {
+          log(`Tentando digitar no elemento: '${s}'`);
+          const el = await h.find(s, xpath);
+          if (el) {
+            el.value = txt;
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+            await h.wait(TIMING.TYPE_WAIT);
+            log(`Texto inserido com sucesso em: '${s}'`, 'success');
+            return true;
+          }
+          log(`Falha ao digitar: elemento não encontrado '${s}'`, 'error');
+          return false;
+        },
+      };
+
+      const handleNzSelect = async ({
+        inputSelector,
+        valueToType,
+        optionText,
+      }) => {
+        log(`Iniciando seleção em dropdown (antd). Opção: '${optionText}'`);
+        if (!(await h.click(inputSelector, true)))
+          throw new Error(
+            `Não foi possível clicar no input do select: ${inputSelector}`
+          );
+        if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true)))
+          throw new Error("Dropdown do select não apareceu.");
+        if (valueToType) {
+          if (!(await h.type(inputSelector, valueToType, true)))
+            throw new Error(`Não foi possível digitar em: ${inputSelector}`);
+          await h.wait(TIMING.FILTER_WAIT);
         }
-        await new Promise(res => setTimeout(res, 200));
-      }
-      log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
-      return null;
-    },
-    click: async (s, xpath = false) => {
-      log(`Tentando clicar no elemento: '${s}'`);
-      const el = await h.find(s, xpath);
-      if (el) {
-        el.click();
-        await h.wait(TIMING.CLICK_WAIT);
-        log(`Clique realizado com sucesso em: '${s}'`, 'success');
-        return true;
-      }
-      log(`Falha ao clicar: elemento não encontrado '${s}'`, 'error');
-      return false;
-    },
-    type: async (s, txt, xpath = false) => {
-      log(`Tentando digitar no elemento: '${s}'`);
-      const el = await h.find(s, xpath);
-      if (el) {
-        el.value = txt;
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        el.dispatchEvent(new Event("change", { bubbles: true }));
-        await h.wait(TIMING.TYPE_WAIT);
-        log(`Texto inserido com sucesso em: '${s}'`, 'success');
-        return true;
-      }
-      log(`Falha ao digitar: elemento não encontrado '${s}'`, 'error');
-      return false;
-    },
-  };
+        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
+        if (!(await h.click(optionSelector, true)))
+          throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
+        log(`Opção '${optionText}' selecionada com sucesso.`, 'success');
+      };
 
-  // Função para aguardar elemento habilitado
-  const waitForElementEnabled = async (selector, isXPath = false, timeout = 10000) => {
-    log(`Aguardando elemento ser habilitado: '${selector}'`, 'wait');
-    const startTime = Date.now();
-    
-    while (Date.now() - startTime < timeout) {
       try {
-        const element = isXPath 
-          ? document.evaluate(selector, document, null, 9, null).singleNodeValue
-          : document.querySelector(selector);
+        log("Etapa 1: Inserir mensagem principal.");
+        if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
+            log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
+            await h.click(SELECTORS.UPLOAD_BUTTON);
+        }
+        if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage)))
+          throw new Error("Não foi possível digitar na área de texto.");
         
-        if (element) {
-          const isDisabled = element.closest('nz-select')?.classList.contains('ant-select-disabled') ||
-                            element.classList.contains('ant-select-disabled') ||
-                            element.disabled;
-          
-          if (!isDisabled) {
-            log(`Elemento habilitado encontrado: '${selector}'`, 'success');
-            return element;
+        if (document.getElementById("importantCheckbox").checked) {
+            log("Chamado marcado como importante. Tentando clicar no botão de importância.");
+            await h.click(SELECTORS.IMPORTANT_BUTTON);
+        }
+        
+        if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON)))
+          throw new Error("Não foi possível clicar no envio principal.");
+        await h.wait(TIMING.DEFAULT_WAIT);
+
+        if (this.selectedItem.etiquetaInterna) {
+          log("Etapa 2: Aplicar tag interna.");
+          if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
+            await handleNzSelect({
+              inputSelector: SELECTORS.TAG_INPUT,
+              valueToType: this.selectedItem.etiquetaInterna,
+              optionText: this.selectedItem.etiquetaInterna,
+            });
+            await h.click("[data-testid='btn-Concluir']");
+          } else {
+            log("Botão de adicionar tag não encontrado, pulando etapa.", 'wait');
           }
         }
-        
-        await new Promise(resolve => setTimeout(resolve, 200));
+
+        if (this.selectedItem.externo) {
+          log("Etapa 3: Iniciar fluxo de encaminhamento externo.");
+          await h.click(SELECTORS.FORWARD_BUTTON);
+          if (document.getElementById("externalCallCheckbox").checked) {
+            log("Opção 'Aguardar chamado externo' selecionada.");
+            await h.click("//lib-input-switch//button", true);
+          }
+
+          log("Selecionando setor 'suporte externo'.");
+          await handleNzSelect({
+            inputSelector: SELECTORS.SECTOR_SELECT,
+            optionText: "suporte externo",
+          });
+          
+          log(`Selecionando problema: '${this.selectedItem.etiquetaExterna}'.`);
+          await handleNzSelect({
+            inputSelector: SELECTORS.PROBLEM_SELECT,
+            valueToType: this.selectedItem.etiquetaExterna,
+            optionText: this.selectedItem.etiquetaExterna,
+          });
+          
+          await h.wait(TIMING.DEFAULT_WAIT);
+
+          if (this.selectedItem.servicoExterno) {
+            log(`Selecionando serviço: '${this.selectedItem.servicoExterno}'.`);
+            await handleNzSelect({
+              inputSelector: SELECTORS.SERVICE_SELECT,
+              valueToType: this.selectedItem.servicoExterno,
+              optionText: this.selectedItem.servicoExterno,
+            });
+          }
+          await h.click("[data-testid='btn-Continuar']");
+          log("Fluxo de encaminhamento externo finalizado.", 'success');
+
+        } else if (document.getElementById("reminderCheckbox").checked) {
+          log("Etapa 3: Adicionar lembrete.");
+          if (await h.click(SELECTORS.MORE_BUTTON)) {
+            await h.click(
+              "//nz-list-item[span[text()='Adicionar lembrete']]",
+              true
+            );
+            await h.type("#titulo", "Fazer retorno");
+            await h.click("//button/span[contains(text(), 'Concluir')]", true);
+            log("Lembrete adicionado com sucesso.", 'success');
+          }
+        } else {
+          log("Etapa 3: Finalizar atendimento (padrão).");
+          if (await h.click(SELECTORS.MORE_BUTTON)) {
+            await h.click("//nz-list-item[span[text()='Finalizar']]", true);
+            log("Atendimento finalizado com sucesso.", 'success');
+          }
+        }
+        this.showToast("Automação concluída com sucesso!", "success");
+        log("================ AUTOMAÇÃO CONCLUÍDA ================", "success");
+
       } catch (error) {
-        log(`Erro ao verificar elemento: ${error.message}`, 'error');
-        await new Promise(resolve => setTimeout(resolve, 200));
+        log(`ERRO na automação: ${error.message}`, "error");
+        console.error("Stacktrace do erro:", error);
+        this.showToast(error.message, "error");
+      } finally {
+        this.setLoading(false, sendButton, "📤 Enviar");
+        this.resetSelection();
+        log("Limpeza finalizada e estado inicial restaurado.", "info");
       }
     }
-    
-    log(`Timeout: Elemento não foi habilitado após ${timeout}ms: '${selector}'`, 'error');
-    return null;
-  };
-
-  // Função melhorada para seleção em dropdowns Ant Design
-  const handleNzSelect = async ({ inputSelector, valueToType, optionText }) => {
-    log(`Iniciando seleção em dropdown (antd). Opção: '${optionText}'`);
-    
-    if (!(await h.click(inputSelector, true))) {
-      throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
-    }
-    
-    if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true))) {
-      throw new Error("Dropdown do select não apareceu.");
-    }
-    
-    if (valueToType) {
-      if (!(await h.type(inputSelector, valueToType, true))) {
-        throw new Error(`Não foi possível digitar em: ${inputSelector}`);
-      }
-      await h.wait(TIMING.FILTER_WAIT);
-    }
-    
-    const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
-    if (!(await h.click(optionSelector, true))) {
-      throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
-    }
-    
-    log(`Opção '${optionText}' selecionada com sucesso.`, 'success');
-  };
-
-  // Função especializada para seleção dependente de problema e serviço
-  const handleDependentProblemService = async (problemText, serviceText) => {
-    log("=== Iniciando seleção dependente Problema → Serviço ===", 'info');
-    
-    // Etapa 1: Selecionar problema
-    log(`Selecionando problema: '${problemText}'`);
-    await handleNzSelect({
-      inputSelector: SELECTORS.PROBLEM_SELECT,
-      valueToType: problemText,
-      optionText: problemText,
-    });
-    
-    // Etapa 2: Aguardar habilitação do campo de serviço
-    if (serviceText && serviceText.trim() !== '') {
-      log("Aguardando habilitação do campo de serviço...", 'wait');
-      await h.wait(TIMING.DEFAULT_WAIT);
-      
-      const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
-      if (!serviceElement) {
-        throw new Error("Campo de serviço não foi habilitado dentro do tempo limite");
-      }
-      
-      // Etapa 3: Selecionar serviço
-      log(`Selecionando serviço: '${serviceText}'`);
-      await handleNzSelect({
-        inputSelector: SELECTORS.SERVICE_SELECT,
-        valueToType: serviceText,
-        optionText: serviceText,
-      });
-      
-      log("=== Seleção dependente concluída com sucesso ===", 'success');
-    } else {
-      log("Nenhum serviço configurado - pulando seleção de serviço");
-    }
-  };
-
-  try {
-    // Etapa 1: Inserir mensagem principal
-    log("Etapa 1: Inserir mensagem principal.");
-    if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
-        log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
-        await h.click(SELECTORS.UPLOAD_BUTTON);
-    }
-    if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage)))
-      throw new Error("Não foi possível digitar na área de texto.");
-    
-    if (document.getElementById("importantCheckbox").checked) {
-        log("Chamado marcado como importante. Tentando clicar no botão de importância.");
-        await h.click(SELECTORS.IMPORTANT_BUTTON);
-    }
-    
-    if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON)))
-      throw new Error("Não foi possível clicar no envio principal.");
-    await h.wait(TIMING.DEFAULT_WAIT);
-
-    // Etapa 2: Aplicar tag interna
-    if (this.selectedItem.etiquetaInterna) {
-      log("Etapa 2: Aplicar tag interna.");
-      if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
-        await handleNzSelect({
-          inputSelector: SELECTORS.TAG_INPUT,
-          valueToType: this.selectedItem.etiquetaInterna,
-          optionText: this.selectedItem.etiquetaInterna,
-        });
-        await h.click("[data-testid='btn-Concluir']");
-      } else {
-        log("Botão de adicionar tag não encontrado, pulando etapa.", 'wait');
-      }
-    }
-
-    // Etapa 3: Fluxo de encaminhamento externo com seleção dependente
-    if (this.selectedItem.externo) {
-      log("Etapa 3: Iniciar fluxo de encaminhamento externo com seleção dependente.");
-      await h.click(SELECTORS.FORWARD_BUTTON);
-      
-      if (document.getElementById("externalCallCheckbox").checked) {
-        log("Opção 'Aguardar chamado externo' selecionada.");
-        await h.click("//lib-input-switch//button", true);
-      }
-
-      // Selecionar setor
-      log("Selecionando setor 'suporte externo'.");
-      await handleNzSelect({
-        inputSelector: SELECTORS.SECTOR_SELECT,
-        optionText: "suporte externo",
-      });
-      
-      // Usar seleção dependente para problema e serviço
-      await handleDependentProblemService(
-        this.selectedItem.etiquetaExterna,
-        this.selectedItem.servicoExterno
-      );
-      
-      await h.click("[data-testid='btn-Continuar']");
-      log("Fluxo de encaminhamento externo finalizado.", 'success');
-
-    } else if (document.getElementById("reminderCheckbox").checked) {
-      // Etapa 3: Adicionar lembrete
-      log("Etapa 3: Adicionar lembrete.");
-      if (await h.click(SELECTORS.MORE_BUTTON)) {
-        await h.click("//nz-list-item[span[text()='Adicionar lembrete']]", true);
-        await h.type("#titulo", "Fazer retorno");
-        await h.click("//button/span[contains(text(), 'Concluir')]", true);
-        log("Lembrete adicionado com sucesso.", 'success');
-      }
-    } else {
-      // Etapa 3: Finalizar atendimento
-      log("Etapa 3: Finalizar atendimento (padrão).");
-      if (await h.click(SELECTORS.MORE_BUTTON)) {
-        await h.click("//nz-list-item[span[text()='Finalizar']]", true);
-        log("Atendimento finalizado com sucesso.", 'success');
-      }
-    }
-    
-    this.showToast("Automação concluída com sucesso!", "success");
-    log("================ AUTOMAÇÃO CONCLUÍDA ================", "success");
-
-  } catch (error) {
-    log(`ERRO na automação: ${error.message}`, "error");
-    console.error("Stacktrace do erro:", error);
-    this.showToast(error.message, "error");
-  } finally {
-    this.setLoading(false, sendButton, "📤 Enviar");
-    this.resetSelection();
-    log("Limpeza finalizada e estado inicial restaurado.", "info");
   }
-}
-
-// Método auxiliar para validar configuração de problema/serviço
-validateProblemServiceConfig(item) {
-  const log = this.logStep.bind(this);
-  
-  if (!item.externo) {
-    log("Item não é externo - nenhuma validação de serviço necessária");
-    return true;
-  }
-
-  if (!item.etiquetaExterna) {
-    log("AVISO: Item externo sem etiqueta externa configurada", 'wait');
-    return false;
-  }
-
-  if (!item.servicoExterno) {
-    log("AVISO: Item externo sem serviço externo configurado", 'wait');
-  }
-
-  log(`Configuração validada - Problema: '${item.etiquetaExterna}', Serviço: '${item.servicoExterno || 'Nenhum'}'`, 'success');
-  return true;
-}
-
-// Método para testar a seleção dependente isoladamente
-async testDependentSelection(problemText, serviceText) {
-  const log = this.logStep.bind(this);
-  log("=== TESTE DE SELEÇÃO DEPENDENTE ===", 'info');
-  
-  try {
-    const { SELECTORS } = CONFIG;
-    
-    // Simular seleção de problema
-    log(`Testando problema: '${problemText}'`);
-    const problemElement = await document.evaluate(SELECTORS.PROBLEM_SELECT, document, null, 9, null).singleNodeValue;
-    if (problemElement) {
-      log("Campo de problema encontrado", 'success');
-    } else {
-      throw new Error("Campo de problema não encontrado");
-    }
-
-    // Simular aguardar habilitação de serviço
-    if (serviceText) {
-      log(`Testando serviço: '${serviceText}'`);
-      const serviceElement = await document.evaluate(SELECTORS.SERVICE_SELECT, document, null, 9, null).singleNodeValue;
-      if (serviceElement) {
-        const isDisabled = serviceElement.closest('nz-select')?.classList.contains('ant-select-disabled');
-        log(`Campo de serviço - Encontrado: true, Habilitado: ${!isDisabled}`, isDisabled ? 'wait' : 'success');
-      } else {
-        log("Campo de serviço não encontrado", 'error');
-      }
-    }
-
-    log("=== TESTE CONCLUÍDO ===", 'success');
-    return true;
-  } catch (error) {
-    log(`ERRO no teste: ${error.message}`, 'error');
-    return false;
-  }
-}
 
   new AttendanceAutomation();
 })();
