@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.6
 // @namespace    http://tampermonkey.net/
-// @version      4.6-redesigned
+// @version      4.7
 // @description  Sistema de automação com filtros avançados, interface e seção de resumo.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
@@ -1586,7 +1586,7 @@
   // ✅ NOVAS FUNÇÕES (Sem testes)
   // ═════════════════════════════════════════════════════════════════
 
-  // Aguarda até que um elemento (select) esteja habilitado (não possua classe de disabled)
+ // Aguarda até que um elemento (select) esteja habilitado (não possua classe de disabled)
   const waitForElementEnabled = async (selector, isXPath = false, timeout = 10000) => {
     const log = (msg, status = 'info') => {
       const prefix = "[Service Selection]";
@@ -2474,18 +2474,18 @@
         find: async (s, xpath = false, t = TIMING.ELEMENT_TIMEOUT) => {
           log(`Buscando elemento: '${s}' (XPath: ${xpath})`);
           const startTime = Date.now();
-            while (Date.now() - startTime < t) {
-              const el = xpath
-                ? document.evaluate(s, document, null, 9, null).singleNodeValue
-                : document.querySelector(s);
-              if (el) {
-                log(`Elemento encontrado: '${s}'`, 'success');
-                return el;
-              }
-              await new Promise(res => setTimeout(res, 200));
+          while (Date.now() - startTime < t) {
+            const el = xpath
+              ? document.evaluate(s, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
+              : document.querySelector(s);
+            if (el) {
+              log(`Elemento encontrado: '${s}'`, 'success');
+              return el;
             }
-            log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
-            return null;
+            await new Promise(res => setTimeout(res, 200));
+          }
+          log(`Elemento NÃO encontrado após ${t}ms: '${s}'`, 'error');
+          return null;
         },
         click: async (s, xpath = false) => {
           log(`Tentando clicar no elemento: '${s}'`);
@@ -2548,18 +2548,15 @@
         await handleNzSelect({
           inputSelector: SELECTORS.PROBLEM_SELECT,
           valueToType: problemText,
-            optionText: problemText,
+          optionText: problemText,
         });
 
-        // Clica no campo de problemas para garantir que o dropdown seja fechado
         log("Fechando dropdown do problema antes de prosseguir com serviço...", 'wait');
         await h.click(SELECTORS.PROBLEM_SELECT, true);
         await h.wait(TIMING.ANIMATION_DURATION);
 
         if (serviceText && serviceText.trim() !== '') {
           log("Aguardando habilitação do campo de serviço...", 'wait');
-          await h.wait(TIMING.DEFAULT_WAIT);
-
           const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
           if (!serviceElement) {
             throw new Error("Campo de serviço não foi habilitado dentro do tempo limite");
@@ -2579,42 +2576,58 @@
       };
 
       try {
-        // Etapa 1: Mensagem principal
-        log("Etapa 1: Inserir mensagem principal.");
-        if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
-          log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
-          await h.click(SELECTORS.UPLOAD_BUTTON);
-        }
-        if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage)))
-          throw new Error("Não foi possível digitar na área de texto.");
+        log("Etapa 1 & 2: Executando envio de mensagem e etiquetagem interna em paralelo.");
+        const automationTasks = [];
 
-        if (document.getElementById("importantCheckbox").checked) {
-          log("Chamado marcado como importante. Tentando clicar no botão de importância.");
-          await h.click(SELECTORS.IMPORTANT_BUTTON);
-        }
-
-        if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON)))
-          throw new Error("Não foi possível clicar no envio principal.");
-        await h.wait(TIMING.DEFAULT_WAIT);
-
-        // Etapa 2: Tag interna
-        if (this.selectedItem.etiquetaInterna) {
-          log("Etapa 2: Aplicar tag interna.");
-          if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
-            await handleNzSelect({
-              inputSelector: SELECTORS.TAG_INPUT,
-              valueToType: this.selectedItem.etiquetaInterna,
-              optionText: this.selectedItem.etiquetaInterna,
-            });
-            await h.click("[data-testid='btn-Concluir']");
-          } else {
-            log("Botão de adicionar tag não encontrado, pulando etapa.", 'wait');
+        // Tarefa 1: Enviar a mensagem principal.
+        const sendMessageTask = async () => {
+          log("Sub-tarefa: Inserir e enviar mensagem principal.");
+          if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
+            log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
+            await h.click(SELECTORS.UPLOAD_BUTTON);
           }
+          if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage))) {
+            throw new Error("Não foi possível digitar na área de texto.");
+          }
+
+          if (document.getElementById("importantCheckbox").checked) {
+            log("Chamado marcado como importante. Tentando clicar no botão de importância.");
+            await h.click(SELECTORS.IMPORTANT_BUTTON);
+          }
+          
+          if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON))) {
+            throw new Error("Não foi possível clicar no envio principal.");
+          }
+        };
+        automationTasks.push(sendMessageTask());
+
+        // Tarefa 2: Aplicar a etiqueta interna.
+        if (this.selectedItem.etiquetaInterna) {
+          const addInternalTagTask = async () => {
+            log("Sub-tarefa: Aplicar tag interna.");
+            // h.find() já possui um timeout, então ele aguardará o elemento aparecer.
+            if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
+              await handleNzSelect({
+                inputSelector: SELECTORS.TAG_INPUT,
+                valueToType: this.selectedItem.etiquetaInterna,
+                optionText: this.selectedItem.etiquetaInterna,
+              });
+              await h.click("[data-testid='btn-Concluir']");
+            } else {
+              log("Botão de adicionar tag não encontrado, pulando etapa de tag.", 'wait');
+            }
+          };
+          automationTasks.push(addInternalTagTask());
         }
 
-        // Etapa 3: Fluxo externo dependente
+        // Aguarda a conclusão das tarefas de mensagem e tag.
+        await Promise.all(automationTasks);
+        log("Etapas de mensagem e tag concluídas.", 'success');
+        
+        // Etapa 3: Ações Pós-Envio (executadas sequencialmente, conforme solicitado).
+        log("Etapa 3: Iniciando ações pós-envio.");
         if (this.selectedItem.externo) {
-          log("Etapa 3: Iniciar fluxo de encaminhamento externo com seleção dependente.");
+          log("Iniciando fluxo de encaminhamento externo com seleção dependente.");
           await h.click(SELECTORS.FORWARD_BUTTON);
 
           if (document.getElementById("externalCallCheckbox").checked) {
@@ -2637,7 +2650,7 @@
           log("Fluxo de encaminhamento externo finalizado.", 'success');
 
         } else if (document.getElementById("reminderCheckbox").checked) {
-          log("Etapa 3: Adicionar lembrete.");
+          log("Adicionando lembrete.");
           if (await h.click(SELECTORS.MORE_BUTTON)) {
             await h.click("//nz-list-item[span[text()='Adicionar lembrete']]", true);
             await h.type("#titulo", "Fazer retorno");
@@ -2645,11 +2658,11 @@
             log("Lembrete adicionado com sucesso.", 'success');
           }
         } else {
-          log("Etapa 3: Finalizar atendimento (padrão).");
-            if (await h.click(SELECTORS.MORE_BUTTON)) {
-              await h.click("//nz-list-item[span[text()='Finalizar']]", true);
-              log("Atendimento finalizado com sucesso.", 'success');
-            }
+          log("Finalizando atendimento (padrão).");
+          if (await h.click(SELECTORS.MORE_BUTTON)) {
+            await h.click("//nz-list-item[span[text()='Finalizar']]", true);
+            log("Atendimento finalizado com sucesso.", 'success');
+          }
         }
 
         this.showToast("Automação concluída com sucesso!", "success");
