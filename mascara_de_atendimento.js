@@ -279,13 +279,16 @@
       document.body.appendChild(c);
     }
 
-    // MODAL.HTML CORRIGIDO: Removido o conflito de botões
+    // Corrigido: Botão temporário agora é criado com o ícone.
     async loadAssets() {
-        // Cria um botão de loader temporário com ID ÚNICO
+        // Define o SVG do ícone aqui para ser usado no botão temporário
+        const iconSVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-240h560v-400H200v400Z"></path></svg>';
+        
         const loaderBtn = document.createElement("button");
-        loaderBtn.id = "ua-loader-btn"; // ID único para evitar conflitos
-        loaderBtn.className = "ua-automation-floating-btn"; // Usa a mesma classe para manter o estilo
+        loaderBtn.id = "ua-loader-btn";
+        loaderBtn.className = "ua-automation-floating-btn";
         loaderBtn.title = "Carregando...";
+        loaderBtn.innerHTML = iconSVG; // <-- ÍCONE INSERIDO AQUI
         document.body.appendChild(loaderBtn);
 
         try {
@@ -311,19 +314,15 @@
         } catch (error) {
             console.error("Erro ao carregar assets:", error);
             this.showToast(error.message, "error");
-            throw error; // Propaga o erro para o init() lidar com ele
+            throw error;
         } finally {
-            // Remove o botão de loader temporário.
-            // O botão real com o ID "automationFloatingBtn" será injetado pelo injectHTML().
             loaderBtn.remove();
         }
     }
 
     setupEventListeners() {
-      // Este getElementById agora encontrará o botão correto, injetado pelo HTML
       const floatingBtn = document.getElementById("automationFloatingBtn");
       
-      // Verificação para garantir que o botão existe e o listener não foi anexado
       if (!floatingBtn || floatingBtn.getAttribute('data-listener-attached')) return;
       
       floatingBtn.addEventListener("click", () => this.toggleModal(true));
@@ -384,7 +383,6 @@
         .addEventListener("click", () => this.toggleEditModal(false));
       document.addEventListener("keydown", this.handleGlobalKeydown.bind(this));
 
-      // Clique em checkmark e container customizados
       document.addEventListener("click", (e) => {
         try {
           if (e.target?.classList?.contains("ua-checkmark")) {
@@ -955,7 +953,6 @@
       }
     }
 
-    // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO) =========
     async executeAutomation() {
       if (!this.selectedItem || this.isLoading) return;
 
@@ -1077,7 +1074,6 @@
         log("Etapa 1 & 2: Executando envio de mensagem e etiquetagem interna em paralelo.");
         const automationTasks = [];
 
-        // Tarefa 1: Enviar a mensagem principal.
         const sendMessageTask = async () => {
           log("Sub-tarefa: Inserir e enviar mensagem principal.");
           if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
@@ -1099,7 +1095,6 @@
         };
         automationTasks.push(sendMessageTask());
 
-        // Tarefa 2: Aplicar a etiqueta interna.
         if (this.selectedItem.etiquetaInterna) {
           const addInternalTagTask = async () => {
             log("Sub-tarefa: Aplicar tag interna.");
@@ -1117,11 +1112,9 @@
           automationTasks.push(addInternalTagTask());
         }
 
-        // Aguarda a conclusão das tarefas de mensagem e tag.
         await Promise.all(automationTasks);
         log("Etapas de mensagem e tag concluídas.", 'success');
         
-        // Etapa 3: Ações Pós-Envio (executadas sequencialmente, conforme solicitado).
         log("Etapa 3: Iniciando ações pós-envio.");
         if (this.selectedItem.externo) {
           log("Iniciando fluxo de encaminhamento externo com seleção dependente.");
@@ -1177,7 +1170,6 @@
     }
   }
 
-  // Exportações (caso usado em ambiente de testes externos / bundlers)
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       handleDependentServiceSelection,
