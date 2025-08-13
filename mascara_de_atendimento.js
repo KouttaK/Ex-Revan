@@ -18,8 +18,8 @@
   const CONFIG = {
     // ATENÇÃO: Substitua pelas URLs corretas dos seus arquivos no GitHub Raw
     GITHUB_JSON_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/main/data/problemas.json",
-    CSS_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/refs/heads/main/infra/styles.css", // <-- NOVO
-    HTML_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/refs/heads/main/infra/modal.html", // <-- NOVO
+    CSS_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/main/infra/styles.css",
+    HTML_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/main/infra/modal.html",
     SELECTORS: {
       MAIN_TEXT_AREA: ".text-area",
       MAIN_SEND_BUTTON: "#send_button",
@@ -45,7 +45,7 @@
       TOAST_DURATION: 4000,
       FILTER_WAIT: 400,
     },
-    UI: { MODAL_MAX_HEIGHT: "85vh" }, // Esta variável não é mais usada no CSS, mas pode ser mantida para referência
+    UI: { MODAL_MAX_HEIGHT: "85vh" },
   };
 
   // ═════════════════════════════════════════════════════════════════
@@ -240,8 +240,8 @@
       this.finalMessage = "";
       this.isLoading = false;
       this.isFilterExpanded = true;
-      this.cssContent = ""; // <-- NOVO
-      this.htmlContent = ""; // <-- NOVO
+      this.cssContent = "";
+      this.htmlContent = "";
       this.accordionStates = {
         messageCard: true,
         tagCard: true,
@@ -268,64 +268,63 @@
 
     injectStyles() {
       const s = document.createElement("style");
-      s.textContent = this.cssContent; // <-- MODIFICADO
+      s.textContent = this.cssContent;
       document.head.appendChild(s);
     }
 
     injectHTML() {
       const c = document.createElement("div");
       c.id = "ua-container";
-      c.innerHTML = this.htmlContent; // <-- MODIFICADO
+      c.innerHTML = this.htmlContent;
       document.body.appendChild(c);
     }
 
+    // MODAL.HTML CORRIGIDO: Removido o conflito de botões
     async loadAssets() {
-      const btn = document.createElement("button");
-      btn.id = "automationFloatingBtn";
-      btn.className = "ua-automation-floating-btn";
-      btn.title = "Carregando...";
-      document.body.appendChild(btn);
-      const iconSVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-240h560v-400H200v400Z"></path></svg>';
+        // Cria um botão de loader temporário com ID ÚNICO
+        const loaderBtn = document.createElement("button");
+        loaderBtn.id = "ua-loader-btn"; // ID único para evitar conflitos
+        loaderBtn.className = "ua-automation-floating-btn"; // Usa a mesma classe para manter o estilo
+        loaderBtn.title = "Carregando...";
+        document.body.appendChild(loaderBtn);
 
-      try {
-        this.setLoading(true, btn);
+        try {
+            this.setLoading(true, loaderBtn);
 
-        const [jsonResponse, cssResponse, htmlResponse] = await Promise.all([
-            fetch(CONFIG.GITHUB_JSON_URL),
-            fetch(CONFIG.CSS_URL),
-            fetch(CONFIG.HTML_URL)
-        ]);
+            const [jsonResponse, cssResponse, htmlResponse] = await Promise.all([
+                fetch(CONFIG.GITHUB_JSON_URL),
+                fetch(CONFIG.CSS_URL),
+                fetch(CONFIG.HTML_URL)
+            ]);
 
-        if (!jsonResponse.ok) throw new Error(`Falha ao buscar JSON: ${jsonResponse.statusText}`);
-        if (!cssResponse.ok) throw new Error(`Falha ao buscar CSS: ${cssResponse.statusText}`);
-        if (!htmlResponse.ok) throw new Error(`Falha ao buscar HTML: ${htmlResponse.statusText}`);
-        
-        const jsonData = await jsonResponse.json();
-        this.cssContent = await cssResponse.text();
-        this.htmlContent = await htmlResponse.text();
+            if (!jsonResponse.ok) throw new Error(`Falha ao buscar JSON: ${jsonResponse.statusText}`);
+            if (!cssResponse.ok) throw new Error(`Falha ao buscar CSS: ${cssResponse.statusText}`);
+            if (!htmlResponse.ok) throw new Error(`Falha ao buscar HTML: ${htmlResponse.statusText}`);
 
-        this.allItems = jsonData.problemas || [];
-        if (this.allItems.length === 0) throw new Error("Nenhum problema encontrado no JSON");
+            const jsonData = await jsonResponse.json();
+            this.cssContent = await cssResponse.text();
+            this.htmlContent = await htmlResponse.text();
 
-      } catch (error) {
-        console.error("Erro ao carregar assets:", error);
-        this.showToast(error.message, "error");
-        throw error; // Propaga o erro para o init() lidar com ele
-      } finally {
-        this.setLoading(false, btn, iconSVG);
-        // O botão real será inserido pelo injectHTML, então este pode ser removido
-        // ou reaproveitado. Por simplicidade, deixamos o injectHTML criar o seu.
-        const tempBtn = document.getElementById("automationFloatingBtn");
-        if (tempBtn && !document.getElementById("ua-container")) {
-            tempBtn.title = "Abrir Automação (Ctrl + Espaço)";
+            this.allItems = jsonData.problemas || [];
+            if (this.allItems.length === 0) throw new Error("Nenhum problema encontrado no JSON");
+
+        } catch (error) {
+            console.error("Erro ao carregar assets:", error);
+            this.showToast(error.message, "error");
+            throw error; // Propaga o erro para o init() lidar com ele
+        } finally {
+            // Remove o botão de loader temporário.
+            // O botão real com o ID "automationFloatingBtn" será injetado pelo injectHTML().
+            loaderBtn.remove();
         }
-      }
     }
 
     setupEventListeners() {
+      // Este getElementById agora encontrará o botão correto, injetado pelo HTML
       const floatingBtn = document.getElementById("automationFloatingBtn");
-      // Se o botão já existe de uma carga anterior, remove para evitar duplicatas
-      if (floatingBtn.getAttribute('data-listener-attached')) return;
+      
+      // Verificação para garantir que o botão existe e o listener não foi anexado
+      if (!floatingBtn || floatingBtn.getAttribute('data-listener-attached')) return;
       
       floatingBtn.addEventListener("click", () => this.toggleModal(true));
       this.makeDraggable(floatingBtn);
@@ -487,7 +486,7 @@
         this.filteredItems = [...this.allItems];
       } else {
         this.filteredItems = this.allItems.filter(item => {
-          if (!item.filtro || !Array.isArray(item.filтро)) return false;
+          if (!item.filtro || !Array.isArray(item.filtro)) return false;
           return this.selectedFilters.some(selectedFilter =>
             item.filtro.includes(selectedFilter)
           );
@@ -539,7 +538,9 @@
       const overlay = document.getElementById("automationOverlay");
       const btn = document.getElementById("automationFloatingBtn");
 
-      btn.classList.toggle("ua-hidden-by-modal", show);
+      if (btn) {
+          btn.classList.toggle("ua-hidden-by-modal", show);
+      }
 
       if (show) {
         modal.classList.add("ua-show");
@@ -851,7 +852,7 @@
 
     saveEdit() {
       this.finalMessage = document.getElementById("editMessageTextarea").value;
-      document.getElementById("messagePreview").textContent = this.finalMessage;
+      this.updateMessagePreview();
       this.toggleEditModal(false);
       this.showToast("Mensagem atualizada.", "success");
     }
@@ -1052,10 +1053,6 @@
           optionText: problemText,
         });
 
-        log("Fechando dropdown do problema antes de prosseguir com serviço...", 'wait');
-        await h.click(SELECTORS.PROBLEM_SELECT, true);
-        await h.wait(TIMING.ANIMATION_DURATION);
-
         if (serviceText && serviceText.trim() !== '') {
           log("Aguardando habilitação do campo de serviço...", 'wait');
           const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
@@ -1106,7 +1103,6 @@
         if (this.selectedItem.etiquetaInterna) {
           const addInternalTagTask = async () => {
             log("Sub-tarefa: Aplicar tag interna.");
-            // h.find() já possui um timeout, então ele aguardará o elemento aparecer.
             if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
               await handleNzSelect({
                 inputSelector: SELECTORS.TAG_INPUT,
