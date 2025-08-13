@@ -18,8 +18,8 @@
   const CONFIG = {
     // ATENÇÃO: Substitua pelas URLs corretas dos seus arquivos no GitHub Raw
     GITHUB_JSON_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/main/data/problemas.json",
-    CSS_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/refs/heads/main/infra/styles.css", // <-- NOVO
-    HTML_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/refs/heads/main/infra/modal.html", // <-- NOVO
+    CSS_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/refs/heads/main/infra/styles.css",
+    HTML_URL: "https://raw.githubusercontent.com/KouttaK/Ex-Revan/refs/heads/main/infra/modal.html",
     SELECTORS: {
       MAIN_TEXT_AREA: ".text-area",
       MAIN_SEND_BUTTON: "#send_button",
@@ -240,8 +240,8 @@
       this.finalMessage = "";
       this.isLoading = false;
       this.isFilterExpanded = true;
-      this.cssContent = ""; // <-- NOVO
-      this.htmlContent = ""; // <-- NOVO
+      this.cssContent = "";
+      this.htmlContent = "";
       this.accordionStates = {
         messageCard: true,
         tagCard: true,
@@ -250,11 +250,24 @@
       this.init();
     }
 
+    // ========= MÉTODO INIT (ATUALIZADO) =========
     async init() {
       try {
-        await this.loadAssets(); // Carrega todos os recursos primeiro
+        // Carrega todos os recursos. `loadAssets` cria um botão temporário para feedback.
+        await this.loadAssets();
+
+        // 🟢 [CORREÇÃO] Remove o botão temporário antes de injetar o HTML final.
+        // Isso evita o problema do botão duplicado.
+        const tempBtn = document.getElementById("automationFloatingBtn");
+        if (tempBtn) {
+            tempBtn.remove();
+        }
+
+        // Continua com a injeção da UI permanente.
         this.injectStyles();
         this.injectHTML();
+
+        // Configura os listeners e o estado inicial da aplicação.
         this.setupEventListeners();
         this.setupAccordionFunctionality();
         this.setupFilters();
@@ -263,23 +276,31 @@
       } catch (error) {
         console.error("Erro na inicialização:", error);
         this.showToast("Falha ao carregar a automação.", "error");
+
+        // 🟢 [CORREÇÃO] Garante que o botão temporário seja removido também em caso de erro.
+        const tempBtnOnError = document.getElementById("automationFloatingBtn");
+        if (tempBtnOnError) {
+            tempBtnOnError.remove();
+        }
       }
     }
 
     injectStyles() {
       const s = document.createElement("style");
-      s.textContent = this.cssContent; // <-- MODIFICADO
+      s.textContent = this.cssContent;
       document.head.appendChild(s);
     }
 
     injectHTML() {
       const c = document.createElement("div");
       c.id = "ua-container";
-      c.innerHTML = this.htmlContent; // <-- MODIFICADO
+      c.innerHTML = this.htmlContent;
       document.body.appendChild(c);
     }
 
     async loadAssets() {
+      // Este botão é temporário, apenas para indicar o carregamento inicial.
+      // Ele será removido no método `init` após o carregamento ser concluído.
       const btn = document.createElement("button");
       btn.id = "automationFloatingBtn";
       btn.className = "ua-automation-floating-btn";
@@ -313,8 +334,8 @@
         throw error; // Propaga o erro para o init() lidar com ele
       } finally {
         this.setLoading(false, btn, iconSVG);
-        // O botão real será inserido pelo injectHTML, então este pode ser removido
-        // ou reaproveitado. Por simplicidade, deixamos o injectHTML criar o seu.
+        // O comentário abaixo é chave: o botão real será inserido pelo `injectHTML`.
+        // A lógica de remoção foi movida para o `init` para maior clareza.
         const tempBtn = document.getElementById("automationFloatingBtn");
         if (tempBtn && !document.getElementById("ua-container")) {
             tempBtn.title = "Abrir Automação (Ctrl + Espaço)";
