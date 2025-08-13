@@ -1,0 +1,159 @@
+<button id="automationFloatingBtn" class="ua-automation-floating-btn" title="Abrir Automação (Ctrl + Espaço)"></button>
+<div id="automationOverlay" class="ua-automation-overlay"></div>
+<div id="automationModal" class="ua-automation-modal">
+    <div class="ua-automation-modal-content">
+        <div class="ua-modal-left-panel" id="modalLeftPanel">
+            <div class="ua-left-panel-header">
+                <h2>Máscara de Atendimento</h2>
+            </div>
+            
+            <div class="ua-filter-section" id="filterSection">
+                <div class="ua-filter-accordion-header" id="filterAccordionHeader">
+                    <div class="ua-filter-header-content">
+                        <h3>🔍 Filtros</h3>
+                        <span class="ua-filter-count-badge" id="filterCountBadge">0</span>
+                        <button class="ua-clear-filters-btn ua-hidden" id="clearFiltersBtn" title="Limpar todos os filtros">
+                            Limpar
+                        </button>
+                    </div>
+                    <svg class="ua-filter-accordion-icon" id="filterAccordionIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="ua-filter-accordion-content ua-expanded" id="filterAccordionContent">
+                    <div class="ua-filter-options" id="filterOptions">
+                        </div>
+                </div>
+            </div>
+            
+            <div class="ua-search-container">
+                <input type="text" id="searchInput" class="ua-search-input" placeholder="Buscar problema..." autocomplete="off">
+                <button class="ua-clear-button ua-hidden" id="clearButton" title="Limpar busca">×</button>
+                <ul id="dropdown" class="ua-dropdown-content"></ul>
+            </div>
+            
+            <div id="specificationSection" class="ua-form-section ua-hidden">
+                <h3>⚙️ Especificações do Atendimento</h3>
+                <div class="ua-checkbox-container">
+                    <input type="checkbox" id="holderCheckbox" checked>
+                    <span class="ua-checkmark"></span>
+                    <label for="holderCheckbox">👤 Fala com o titular</label>
+                </div>
+                <div id="speakerInfo" class="ua-hidden">
+                    <input type="text" id="speakerInput" class="ua-form-input" placeholder="Nome de quem fala...">
+                    <select id="relationshipSelect" class="ua-form-select">
+                        <option value="" disabled selected>Selecione o grau de parentesco</option>
+                        <option value="Cônjuge">Cônjuge</option>
+                        <option value="Filho(a)">Filho(a)</option>
+                        <option value="Pai/Mãe">Pai/Mãe</option>
+                        <option value="Irmão(ã)">Irmão(ã)</option>
+                        <option value="Avô/Avó">Avô/Avó</option>
+                        <option value="Tio(a)">Tio(a)</option>
+                        <option value="Primo(a)">Primo(a)</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <textarea id="observationsTextarea" class="ua-form-textarea" placeholder="Digite suas observações adicionais aqui..."></textarea>
+                <div id="checkboxesContainer">
+                    <div class="ua-checkbox-container ua-hidden" id="externalCallLabel">
+                        <input type="checkbox" id="externalCallCheckbox">
+                        <span class="ua-checkmark"></span>
+                        <label for="externalCallCheckbox">📞 Aguardar chamado externo</label>
+                    </div>
+                    <div class="ua-checkbox-container ua-hidden" id="reminderLabel">
+                        <input type="checkbox" id="reminderCheckbox">
+                        <span class="ua-checkmark"></span>
+                        <label for="reminderCheckbox">⏰ Finalizar com lembrete</label>
+                    </div>
+                    <div class="ua-checkbox-container">
+                        <input type="checkbox" id="importantCheckbox">
+                        <span class="ua-checkmark"></span>
+                        <label for="importantCheckbox">⚠️ Chamado importante</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ua-modal-right-panel ua-hidden" id="modalRightPanel">
+            <div id="previewSection" class="ua-preview-section">
+                <h3>
+                    Resumo do Envio
+                </h3>
+                
+                <div class="ua-summary-container">
+                    <div class="ua-summary-card message-card">
+                        <div class="ua-automation-card-header" onclick="toggleAccordion('messageCard')">
+                            <div class="ua-automation-card-header-content">
+                                <svg class="ua-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                <h4>Prévia da Mensagem</h4>
+                            </div>
+                            <svg class="ua-accordion-icon ua-expanded" id="messageCardIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="ua-card-content ua-expanded" id="messageCardContent">
+                            <div id="messagePreview" class="ua-message-preview"></div>
+                            <div class="ua-message-stats">
+                                <div class="ua-char-count"></div>
+                                <div class="ua-word-count"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="tagPreview" class="ua-summary-card tags-card ua-hidden">
+                        <div class="ua-automation-card-header" onclick="toggleAccordion('tagCard')">
+                            <div class="ua-automation-card-header-content">
+                                <svg class="ua-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                </svg>
+                                <h4>Tags e Etiquetas</h4>
+                            </div>
+                            <svg class="ua-accordion-icon ua-expanded" id="tagCardIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="ua-card-content ua-expanded" id="tagCardContent">
+                            <div class="ua-tag-grid"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="actionPreview" class="ua-summary-card actions-card ua-hidden">
+                        <div class="ua-automation-card-header" onclick="toggleAccordion('actionCard')">
+                            <div class="ua-automation-card-header-content">
+                                <svg class="ua-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                </svg>
+                                <h4>Ações do Sistema</h4>
+                                <span class="ua-card-badge">Auto</span>
+                            </div>
+                            <svg class="ua-accordion-icon ua-expanded" id="actionCardIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="ua-card-content ua-expanded" id="actionCardContent">
+                            <div class="ua-action-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ua-automation-modal-footer ua-hidden" id="modalFooter">
+        <div class="ua-button-container" id="buttonContainer">
+            <button class="ua-btn ua-btn-secondary" id="editButton">✏️ Editar</button>
+            <button class="ua-btn ua-btn-success" id="sendButton">📤 Enviar</button>
+        </div>
+    </div>
+</div>
+<div id="editModal" class="ua-edit-modal">
+    <div class="ua-edit-modal-content">
+        <h3>✏️ Editar Mensagem</h3>
+        <textarea id="editMessageTextarea" class="ua-edit-modal-textarea"></textarea>
+        <div class="ua-edit-modal-buttons">
+            <button class="ua-btn ua-btn-secondary" id="cancelEditButton">Cancelar</button>
+            <button class="ua-btn ua-btn-primary" id="saveEditButton">💾 Salvar</button>
+        </div>
+    </div>
+</div>
