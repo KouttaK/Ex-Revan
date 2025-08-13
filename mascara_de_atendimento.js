@@ -279,16 +279,14 @@
       document.body.appendChild(c);
     }
 
-    // Corrigido: Botão temporário agora é criado com o ícone.
     async loadAssets() {
-        // Define o SVG do ícone aqui para ser usado no botão temporário
         const iconSVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-240h560v-400H200v400Z"></path></svg>';
         
         const loaderBtn = document.createElement("button");
         loaderBtn.id = "ua-loader-btn";
         loaderBtn.className = "ua-automation-floating-btn";
         loaderBtn.title = "Carregando...";
-        loaderBtn.innerHTML = iconSVG; // <-- ÍCONE INSERIDO AQUI
+        loaderBtn.innerHTML = iconSVG;
         document.body.appendChild(loaderBtn);
 
         try {
@@ -953,6 +951,7 @@
       }
     }
 
+    // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO) =========
     async executeAutomation() {
       if (!this.selectedItem || this.isLoading) return;
 
@@ -1071,50 +1070,47 @@
       };
 
       try {
-        log("Etapa 1 & 2: Executando envio de mensagem e etiquetagem interna em paralelo.");
-        const automationTasks = [];
+        // CORREÇÃO: Lógica alterada de paralela para sequencial para evitar race condition.
 
-        const sendMessageTask = async () => {
-          log("Sub-tarefa: Inserir e enviar mensagem principal.");
-          if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
+        // Etapa 1: Aplicar a etiqueta interna (se houver).
+        if (this.selectedItem.etiquetaInterna) {
+            log("Etapa 1: Aplicando tag interna.");
+            if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
+                await handleNzSelect({
+                    inputSelector: SELECTORS.TAG_INPUT,
+                    valueToType: this.selectedItem.etiquetaInterna,
+                    optionText: this.selectedItem.etiquetaInterna,
+                });
+                await h.click("[data-testid='btn-Concluir']");
+                log("Tag interna aplicada com sucesso.", 'success');
+            } else {
+                log("Botão de adicionar tag não encontrado, pulando etapa de tag.", 'wait');
+            }
+        } else {
+            log("Etapa 1: Nenhuma tag interna para aplicar.", 'info');
+        }
+        
+        // Etapa 2: Enviar a mensagem principal.
+        log("Etapa 2: Inserindo e enviando mensagem principal.");
+        if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
             log(`Área de texto principal ('${SELECTORS.MAIN_TEXT_AREA}') não encontrada. Tentando clicar no botão de upload para revelá-la.`);
             await h.click(SELECTORS.UPLOAD_BUTTON);
-          }
-          if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage))) {
+        }
+        if (!(await h.type(SELECTORS.MAIN_TEXT_AREA, this.finalMessage))) {
             throw new Error("Não foi possível digitar na área de texto.");
-          }
-
-          if (document.getElementById("importantCheckbox").checked) {
-            log("Chamado marcado como importante. Tentando clicar no botão de importância.");
-            await h.click(SELECTORS.IMPORTANT_BUTTON);
-          }
-          
-          if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON))) {
-            throw new Error("Não foi possível clicar no envio principal.");
-          }
-        };
-        automationTasks.push(sendMessageTask());
-
-        if (this.selectedItem.etiquetaInterna) {
-          const addInternalTagTask = async () => {
-            log("Sub-tarefa: Aplicar tag interna.");
-            if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
-              await handleNzSelect({
-                inputSelector: SELECTORS.TAG_INPUT,
-                valueToType: this.selectedItem.etiquetaInterna,
-                optionText: this.selectedItem.etiquetaInterna,
-              });
-              await h.click("[data-testid='btn-Concluir']");
-            } else {
-              log("Botão de adicionar tag não encontrado, pulando etapa de tag.", 'wait');
-            }
-          };
-          automationTasks.push(addInternalTagTask());
         }
 
-        await Promise.all(automationTasks);
-        log("Etapas de mensagem e tag concluídas.", 'success');
+        if (document.getElementById("importantCheckbox").checked) {
+            log("Chamado marcado como importante. Tentando clicar no botão de importância.");
+            await h.click(SELECTORS.IMPORTANT_BUTTON);
+        }
         
+        if (!(await h.click(SELECTORS.MAIN_SEND_BUTTON))) {
+            throw new Error("Não foi possível clicar no envio principal.");
+        }
+        log("Mensagem principal enviada com sucesso.", 'success');
+
+        // Etapa 3: Ações Pós-Envio.
         log("Etapa 3: Iniciando ações pós-envio.");
         if (this.selectedItem.externo) {
           log("Iniciando fluxo de encaminhamento externo com seleção dependente.");
