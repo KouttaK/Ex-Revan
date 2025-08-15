@@ -1163,10 +1163,17 @@
         if (this.selectedItem.externo) {
           log("Iniciando fluxo de encaminhamento externo com seleção dependente.");
           await h.click(SELECTORS.FORWARD_BUTTON);
+          
+          // >>>>> ALTERAÇÃO PRINCIPAL <<<<<
+          // Adicionada uma pausa para aguardar a animação do modal de encaminhamento.
+          log("Aguardando modal de encaminhamento aparecer...");
+          await h.wait(TIMING.ANIMATION_DURATION + 200);
 
           if (document.getElementById("externalCallCheckbox").checked) {
             log("Opção 'Aguardar chamado externo' selecionada.");
-            await h.click("//lib-input-switch//button", true);
+            if (!(await h.click("//lib-input-switch//button", true))) {
+                throw new Error("Não foi possível clicar no botão SWITCH de 'Aguardar chamado externo'.");
+            }
           }
 
           log("Selecionando setor 'suporte externo'.");
