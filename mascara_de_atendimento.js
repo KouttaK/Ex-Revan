@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Máscara de Atendimento v4.7
+// @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      4.8
-// @description  Sistema de automação com filtros avançados, interface e seção de resumo.
+// @version      4.9
+// @description  Sistema de automação com filtros avançados, interface e seção de resumo aprimorados.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
 // @grant        none
@@ -508,7 +508,7 @@
         this.filteredItems = [...this.allItems];
       } else {
         this.filteredItems = this.allItems.filter(item => {
-          if (!item.filtro || !Array.isArray(item.filтро)) return false;
+          if (!item.filtro || !Array.isArray(item.filtro)) return false;
           return this.selectedFilters.some(selectedFilter =>
             item.filtro.includes(selectedFilter)
           );
@@ -518,8 +518,15 @@
       const searchInput = document.getElementById("searchInput");
       if (this.filteredItems.length === 0) {
         searchInput.value = "";
+        searchInput.disabled = true;
+        searchInput.placeholder = "Nenhum item para os filtros selecionados";
         this.showDropdown(false);
-      } else if (searchInput.value.trim()) {
+      } else {
+        searchInput.disabled = false;
+        searchInput.placeholder = "Buscar problema...";
+      }
+
+      if (searchInput.value.trim()) {
         this.handleSearch({ target: searchInput });
       }
     }
@@ -589,15 +596,15 @@
             i.nome.toLowerCase().includes(filter) ||
             (i.mensagem && i.mensagem.toLowerCase().includes(filter))
         );
-        this.populateDropdown(f);
-        this.showDropdown(f.length > 0);
+        this.populateDropdown(f, filter);
+        this.showDropdown(true); // Sempre mostra o dropdown para exibir a mensagem de "nenhum resultado"
       } else {
         this.showDropdown(false);
       }
     }
 
     handleSearchKeydown(e) {
-      const items = document.querySelectorAll("#dropdown li");
+      const items = document.querySelectorAll("#dropdown li:not(.ua-dropdown-no-results)");
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
         this.navigateDropdown(e.key, items);
@@ -622,16 +629,20 @@
       items[i].scrollIntoView({ block: "nearest" });
     }
 
-    populateDropdown(items) {
+    populateDropdown(items, filter = "") {
       const d = document.getElementById("dropdown");
-      d.innerHTML = items
-        .map(
-          i =>
-            `<li data-id="${i.id}" title="${
+      if (items.length === 0 && filter) {
+          d.innerHTML = `<li class="ua-dropdown-no-results">Nenhum problema encontrado para "${filter}"</li>`;
+      } else {
+          d.innerHTML = items
+              .map(
+                  i =>
+                      `<li data-id="${i.id}" title="${
               i.mensagem ? i.mensagem.substring(0, 100) + "..." : ""
             }">${i.nome}</li>`
-        )
-        .join("");
+              )
+              .join("");
+      }
     }
 
     showDropdown(show) {
@@ -639,7 +650,7 @@
     }
 
     handleDropdownClick(e) {
-      if (e.target.tagName !== "LI") return;
+      if (e.target.tagName !== "LI" || e.target.classList.contains("ua-dropdown-no-results")) return;
       const id = e.target.dataset.id;
       this.selectedItem = this.allItems.find(i => i.id == id);
       if (this.selectedItem) {
@@ -1055,7 +1066,8 @@
           await h.wait(TIMING.FILTER_WAIT);
         }
 
-        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
+        // 🟢 [CORREÇÃO] Troca 'contains' por 'starts-with' para uma busca mais precisa, evitando correspondências parciais indesejadas.
+        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
         if (!(await h.click(optionSelector, true))) {
           throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
         }
