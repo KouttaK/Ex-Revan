@@ -722,7 +722,7 @@
     },
     {
       "id": 61,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["Fixo"],
       "nome": "Desconexão chat - Telefonia",
       "externo": false,
       "aguardar": false,
@@ -734,7 +734,7 @@
     },
     {
       "id": 62,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["TV"],
       "nome": "Desconexão chat - TV",
       "externo": false,
       "aguardar": false,
@@ -758,7 +758,7 @@
     },
     {
       "id": 64,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
       "nome": "Transferência",
       "externo": false,
       "aguardar": false,
@@ -770,7 +770,7 @@
     },
     {
       "id": 65,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
       "nome": "Ausência de confirmação de dados",
       "externo": false,
       "aguardar": false,
@@ -782,7 +782,7 @@
     },
     {
       "id": 66,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
       "nome": "Já solucionando",
       "externo": false,
       "aguardar": false,
@@ -794,7 +794,7 @@
     },
     {
       "id": 67,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
       "nome": "Já resolvido",
       "externo": false,
       "aguardar": false,
@@ -806,7 +806,7 @@
     },
     {
       "id": 68,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
       "nome": "Procedimento somente com o titular",
       "externo": false,
       "aguardar": false,
@@ -818,7 +818,7 @@
     },
     {
       "id": 69,
-      "filtro": ["FWA", "FTTH"],
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
       "nome": "Falta de cordialidade",
       "externo": false,
       "aguardar": false,
@@ -827,6 +827,42 @@
       "etiquetaExterna": "",
       "servicoExterno": "",
       "mensagem": "reporta um problema nos serviços da brisanet. Entretanto, durante o atendimento, houve o uso de linguagem inadequada, o que me levou a encerrar a conversa."
+    },
+    {
+      "id": 70,
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
+      "nome": "Cliente não está no local",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Solicitação de dados",
+      "etiquetaExterna": "",
+      "servicoExterno": "",
+      "mensagem": "entra em contato informando problema nos serviços da Brisanet, porém, durante a sondagem foi verificado que o mesmo não está na residência para verificar ou testar o serviço. O mesmo ficou de entrar em contato quando estiver no local."
+    },
+    {
+      "id": 71,
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
+      "nome": "Cliente em horário de expediente",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Solicitação de dados",
+      "etiquetaExterna": "",
+      "servicoExterno": "",
+      "mensagem": "entra em contato informando problema nos serviços da Brisanet, porém, durante a sondagem foi verificado que o mesmo está em horário de expediente, e por isso não podemos realizar a tratativa do problema. O mesmo ficou de entrar em contato quando estiver disponível."
+    },
+    {
+      "id": 72,
+      "filtro": ["FWA", "FTTH", "Fixo", "TV"],
+      "nome": "Cliente não pode continuar devido compromisso",
+      "externo": false,
+      "aguardar": false,
+      "lembrete": false,
+      "etiquetaInterna": "Solicitação de dados",
+      "etiquetaExterna": "",
+      "servicoExterno": "",
+      "mensagem": "comunica dificuldades com o serviço da brisanet. Durante a verificação, constatou-se que o cliente não estava em disponível para dar continuidade ao processo. Ele entrará em contato quando estiver disponível."
     }
   ],
   
