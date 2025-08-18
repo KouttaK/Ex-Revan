@@ -1119,7 +1119,7 @@
       "etiquetaInternaFallback": "Instabilidade no WI-FI",
       "etiquetaExternaFallback": "Instabilidade no WI-FI",
       "mensagem": "informa estar enfrentando quedas de conexão. Após verificação, observa-se que o problema afeta todos os dispositivos e se restringe à rede sem fio. Eu menciono a intenção de atualizar a rede, no entanto, o cliente destaca que essa questão é recorrente e deseja que uma equipe externa conduza uma análise, uma vez que já havia contatado previamente sem sucesso. Diante da insatisfação do cliente e da constatação de que se trata de uma situação frequente ainda não atendida localmente, uma Ordem de Serviço (O.S.) vai ser aberta para resolver o problema e garantir a retenção do cliente. Agendado de acordo com a disponibilidade do cliente."
-    },
+    }
   ],
   
   "grausParentesco": [
