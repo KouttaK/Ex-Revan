@@ -1069,7 +1069,7 @@
           return false;
         },
       };
-
+      
       const clickNzSelectOptionWithFallback = async (optionText) => {
           log(`Tentando selecionar a opção: '${optionText}' com fallbacks.`);
 
@@ -1081,17 +1081,17 @@
           }
           log(`Opção exata '${optionText}' não encontrada.`, 'wait');
 
-          // Fallback 2: Busca por "MCP"
-          optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(., 'MCP')]`;
+          // Fallback 2: Busca por "MCP" com prioridade
+          optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mcp')]`;
           if (await h.click(optionSelector, true)) {
-              log(`Opção de fallback com 'MCP' encontrada e clicada.`, 'success');
+              log(`Opção de fallback com 'mcp' encontrada e clicada.`, 'success');
               return true;
           }
-          log(`Nenhuma opção com 'MCP' encontrada.`, 'wait');
+          log(`Nenhuma opção com 'mcp' encontrada.`, 'wait');
 
           // Fallback 3: Qualquer opção exceto "Migração de Tv", a menos que seja o texto exato
           if (optionText.toLowerCase() !== 'migração de tv') {
-              optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and not(contains(normalize-space(.), 'Migração de Tv'))]`;
+              optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and not(contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'migração de tv'))]`;
               if (await h.click(optionSelector, true)) {
                   log(`Opção de fallback (não 'Migração de Tv') encontrada e clicada.`, 'success');
                   return true;
