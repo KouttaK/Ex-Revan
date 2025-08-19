@@ -213,10 +213,16 @@
     if (!selectedItem.externo || !selectedItem.servicoExterno) {
       return { success: true, message: "Nenhum serviço externo configurado" };
     }
+    
+    const useFallback = document.getElementById("fallbackTagCheckbox").checked;
+    const etiquetaExterna = (useFallback || !selectedItem.etiquetaExterna) 
+        ? selectedItem.etiquetaExternaFallback 
+        : selectedItem.etiquetaExterna;
+
     return await handleDependentServiceSelection({
       problemSelector: selectors.PROBLEM_SELECT,
       serviceSelector: selectors.SERVICE_SELECT,
-      problemValue: selectedItem.etiquetaExterna,
+      problemValue: etiquetaExterna,
       serviceValue: selectedItem.servicoExterno,
       timing: {
         clickWait: timing.CLICK_WAIT,
@@ -386,6 +392,7 @@
         "externalCallCheckbox",
         "reminderCheckbox",
         "importantCheckbox",
+        "fallbackTagCheckbox", // Adicionado listener para o novo checkbox
       ].forEach(id =>
         document
           .getElementById(id)
@@ -674,14 +681,18 @@
         log("Item não é externo - sem validação de serviço");
         return true;
       }
-      if (!item.etiquetaExterna) {
-        log("AVISO: Item externo sem etiqueta externa configurada", 'wait');
+      
+      const useFallback = document.getElementById("fallbackTagCheckbox").checked;
+      const etiquetaExterna = (useFallback || !item.etiquetaExterna) ? item.etiquetaExternaFallback : item.etiquetaExterna;
+
+      if (!etiquetaExterna) {
+        log("AVISO: Item externo sem etiqueta externa configurada (principal ou fallback)", 'wait');
         return false;
       }
       if (!item.servicoExterno) {
         log("AVISO: Item externo sem serviço externo configurado", 'wait');
       }
-      log(`Config OK - Problema: '${item.etiquetaExterna}', Serviço: '${item.servicoExterno || 'Nenhum'}'`, 'success');
+      log(`Config OK - Problema: '${etiquetaExterna}', Serviço: '${item.servicoExterno || 'Nenhum'}'`, 'success');
       return true;
     }
 
@@ -780,14 +791,24 @@
       if (!this.selectedItem) return;
       const tagPreview = document.getElementById("tagPreview");
       const tagGrid = tagPreview.querySelector(".ua-tag-grid");
+      const useFallback = document.getElementById("fallbackTagCheckbox").checked;
       let tags = [];
 
-      if (this.selectedItem.etiquetaInterna) {
-        tags.push({ text: this.selectedItem.etiquetaInterna, type: 'internal', category: 'Interna' });
+      const etiquetaInterna = (useFallback || !this.selectedItem.etiquetaInterna)
+        ? this.selectedItem.etiquetaInternaFallback
+        : this.selectedItem.etiquetaInterna;
+        
+      if (etiquetaInterna) {
+        tags.push({ text: etiquetaInterna, type: 'internal', category: 'Interna' });
       }
 
-      if (this.selectedItem.externo && this.selectedItem.etiquetaExterna) {
-        tags.push({ text: this.selectedItem.etiquetaExterna, type: 'external', category: 'Externa' });
+      if (this.selectedItem.externo) {
+        const etiquetaExterna = (useFallback || !this.selectedItem.etiquetaExterna)
+          ? this.selectedItem.etiquetaExternaFallback
+          : this.selectedItem.etiquetaExterna;
+        if (etiquetaExterna) {
+            tags.push({ text: etiquetaExterna, type: 'external', category: 'Externa' });
+        }
       }
 
       if (this.selectedItem.servicoExterno) {
@@ -998,6 +1019,7 @@
 
       const { SELECTORS, TIMING } = CONFIG;
       const log = this.logStep.bind(this);
+      const useFallback = document.getElementById("fallbackTagCheckbox").checked;
 
       const h = {
         wait: async (ms) => {
@@ -1066,7 +1088,6 @@
           await h.wait(TIMING.FILTER_WAIT);
         }
 
-        // 🟢 [CORREÇÃO] Troca 'contains' por 'starts-with' para uma busca mais precisa, evitando correspondências parciais indesejadas.
         const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
         if (!(await h.click(optionSelector, true))) {
           throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
@@ -1134,17 +1155,20 @@
           }
         };
         automationTasks.push(sendMessageTask());
-
+        
         // Tarefa 2: Aplicar a etiqueta interna.
-        if (this.selectedItem.etiquetaInterna) {
+        const etiquetaInterna = (useFallback || !this.selectedItem.etiquetaInterna)
+          ? this.selectedItem.etiquetaInternaFallback
+          : this.selectedItem.etiquetaInterna;
+
+        if (etiquetaInterna) {
           const addInternalTagTask = async () => {
             log("Sub-tarefa: Aplicar tag interna.");
-            // h.find() já possui um timeout, então ele aguardará o elemento aparecer.
             if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
               await handleNzSelect({
                 inputSelector: SELECTORS.TAG_INPUT,
-                valueToType: this.selectedItem.etiquetaInterna,
-                optionText: this.selectedItem.etiquetaInterna,
+                valueToType: etiquetaInterna,
+                optionText: etiquetaInterna,
               });
               await h.click("[data-testid='btn-Concluir']");
             } else {
@@ -1164,8 +1188,6 @@
           log("Iniciando fluxo de encaminhamento externo com seleção dependente.");
           await h.click(SELECTORS.FORWARD_BUTTON);
           
-          // >>>>> ALTERAÇÃO PRINCIPAL <<<<<
-          // Adicionada uma pausa para aguardar a animação do modal de encaminhamento.
           log("Aguardando modal de encaminhamento aparecer...");
           await h.wait(TIMING.ANIMATION_DURATION + 200);
 
@@ -1182,8 +1204,12 @@
             optionText: "suporte externo",
           });
 
+          const etiquetaExterna = (useFallback || !this.selectedItem.etiquetaExterna)
+              ? this.selectedItem.etiquetaExternaFallback
+              : this.selectedItem.etiquetaExterna;
+
           await handleDependentProblemService(
-            this.selectedItem.etiquetaExterna,
+            etiquetaExterna,
             this.selectedItem.servicoExterno
           );
 
