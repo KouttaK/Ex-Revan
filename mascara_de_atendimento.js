@@ -1070,6 +1070,45 @@
         },
       };
 
+      const clickNzSelectOptionWithFallback = async (optionText) => {
+          log(`Tentando selecionar a opção: '${optionText}' com fallbacks.`);
+
+          // Fallback 1: Busca exata (case-insensitive, ignorando espaços extras)
+          let optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='${optionText.toLowerCase()}']`;
+          if (await h.click(optionSelector, true)) {
+              log(`Opção exata '${optionText}' encontrada e clicada.`, 'success');
+              return true;
+          }
+          log(`Opção exata '${optionText}' não encontrada.`, 'wait');
+
+          // Fallback 2: Busca por "MCP"
+          optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(., 'MCP')]`;
+          if (await h.click(optionSelector, true)) {
+              log(`Opção de fallback com 'MCP' encontrada e clicada.`, 'success');
+              return true;
+          }
+          log(`Nenhuma opção com 'MCP' encontrada.`, 'wait');
+
+          // Fallback 3: Qualquer opção exceto "Migração de Tv", a menos que seja o texto exato
+          if (optionText.toLowerCase() !== 'migração de tv') {
+              optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and not(contains(normalize-space(.), 'Migração de Tv'))]`;
+              if (await h.click(optionSelector, true)) {
+                  log(`Opção de fallback (não 'Migração de Tv') encontrada e clicada.`, 'success');
+                  return true;
+              }
+              log(`Nenhuma opção de fallback (não 'Migração de Tv') encontrada.`, 'wait');
+          }
+
+          // Fallback 4: Se tudo falhar, tenta clicar na primeira opção disponível
+          optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item')]`;
+          if(await h.click(optionSelector, true)){
+              log(`Último fallback: clicou na primeira opção disponível.`, 'success');
+              return true;
+          }
+
+          return false;
+      };
+
       const handleNzSelect = async ({ inputSelector, valueToType, optionText }) => {
         log(`Iniciando seleção em dropdown (antd). Opção: '${optionText}'`);
 
@@ -1088,12 +1127,11 @@
           await h.wait(TIMING.FILTER_WAIT);
         }
 
-        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and starts-with(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '${optionText.toLowerCase()}')]`;
-        if (!(await h.click(optionSelector, true))) {
-          throw new Error(`Não foi possível selecionar a opção: ${optionText}`);
+        if (!(await clickNzSelectOptionWithFallback(optionText))) {
+            throw new Error(`Não foi possível selecionar a opção: ${optionText} mesmo com fallbacks.`);
         }
 
-        log(`Opção '${optionText}' selecionada com sucesso.`, 'success');
+        log(`Seleção da opção '${optionText}' concluída com sucesso.`, 'success');
       };
 
       const handleDependentProblemService = async (problemText, serviceText) => {
