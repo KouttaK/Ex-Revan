@@ -1006,7 +1006,156 @@
           break;
       }
     }
+    
+    async executeExternalForwardingFlow(selectedItem, useFallback) {
+        const { SELECTORS, TIMING } = CONFIG;
+        const log = this.logStep.bind(this);
+        const h = {
+            wait: async (ms) => {
+                log(`Aguardando por ${ms}ms...`, 'wait');
+                return new Promise(res => setTimeout(res, ms));
+            },
+            find: async (s, xpath = false, t = TIMING.ELEMENT_TIMEOUT) => {
+                const startTime = Date.now();
+                while (Date.now() - startTime < t) {
+                    const el = xpath ?
+                        document.evaluate(s, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue :
+                        document.querySelector(s);
+                    if (el) return el;
+                    await new Promise(res => setTimeout(res, 200));
+                }
+                return null;
+            },
+            click: async (s, xpath = false) => {
+                const el = await h.find(s, xpath);
+                if (el) {
+                    el.click();
+                    await h.wait(TIMING.CLICK_WAIT);
+                    return true;
+                }
+                return false;
+            },
+            type: async (s, txt, xpath = false) => {
+                const el = await h.find(s, xpath);
+                if (el) {
+                    el.value = txt;
+                    el.dispatchEvent(new Event("input", { bubbles: true }));
+                    el.dispatchEvent(new Event("change", { bubbles: true }));
+                    await h.wait(TIMING.TYPE_WAIT);
+                    return true;
+                }
+                return false;
+            },
+        };
 
+        const etiquetaExternaSearchText = (useFallback || !selectedItem.etiquetaExterna) ?
+            selectedItem.etiquetaExternaFallback :
+            selectedItem.etiquetaExterna;
+
+        if (!etiquetaExternaSearchText) {
+            throw new Error("Etiqueta Externa de busca não foi definida para este item.");
+        }
+
+        log("Iniciando fluxo de encaminhamento externo com nova lógica de negócio.");
+        await h.click(SELECTORS.FORWARD_BUTTON);
+        await h.wait(TIMING.ANIMATION_DURATION + 200);
+
+        if (document.getElementById("externalCallCheckbox").checked) {
+            log("Opção 'Aguardar chamado externo' selecionada.");
+            if (!(await h.click("//lib-input-switch//button", true))) {
+                throw new Error("Não foi possível clicar no botão SWITCH de 'Aguardar chamado externo'.");
+            }
+        }
+        
+        log("Selecionando setor 'suporte externo'.");
+        await h.click(SELECTORS.SECTOR_SELECT, true);
+        const sectorOption = await h.find(`//li[contains(text(), 'suporte externo')]`, true);
+        if(!sectorOption) throw new Error("Opção de setor 'suporte externo' não encontrada.");
+        sectorOption.click();
+        await h.wait(TIMING.CLICK_WAIT);
+
+
+        log(`Buscando Etiqueta Externa com prefixo: '${etiquetaExternaSearchText}'`);
+        await h.click(SELECTORS.PROBLEM_SELECT, true);
+        await h.type(SELECTORS.PROBLEM_SELECT, etiquetaExternaSearchText, true);
+        await h.wait(TIMING.FILTER_WAIT);
+        
+        const problemOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        const problemOptions = [];
+        for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
+            problemOptions.push(problemOptionsNodeList.snapshotItem(i));
+        }
+
+        const matchedProblemOption = problemOptions.find(opt =>
+            opt.textContent.trim().toLowerCase().startsWith(etiquetaExternaSearchText.toLowerCase())
+        );
+
+        if (!matchedProblemOption) {
+            throw new Error(`Nenhuma Etiqueta Externa encontrada com o prefixo '${etiquetaExternaSearchText}'`);
+        }
+
+        const selectedProblemText = matchedProblemOption.textContent.trim();
+        log(`Etiqueta Externa encontrada e selecionada: '${selectedProblemText}'`, 'success');
+        matchedProblemOption.click();
+        await h.wait(TIMING.CLICK_WAIT);
+
+        const isMpcRequired = selectedProblemText.toLowerCase().includes("mpc");
+        log(`Verificação MPC: ${isMpcRequired ? 'OBRIGATÓRIO' : 'NÃO OBRIGATÓRIO'}`);
+
+        log("Aguardando habilitação do campo de serviço...");
+        const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
+        if (!serviceElement) throw new Error("Campo de serviço não foi habilitado.");
+
+        await h.click(SELECTORS.SERVICE_SELECT, true);
+        await h.wait(TIMING.FILTER_WAIT);
+
+        const serviceOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+        const serviceOptions = [];
+        for (let i = 0; i < serviceOptionsNodeList.snapshotLength; i++) {
+            serviceOptions.push(serviceOptionsNodeList.snapshotItem(i));
+        }
+        const availableServices = serviceOptions.map(opt => opt.textContent.trim().toLowerCase());
+        log(`Serviços disponíveis: [${availableServices.join(', ')}]`);
+
+        let serviceToSelect = null;
+        const servicePriorities = ["reparo rápido", "reparo físico", "serviço adicional"];
+        const fallbackService = "reparo mpc";
+
+        if (isMpcRequired) {
+            if (availableServices.includes(fallbackService)) {
+                serviceToSelect = fallbackService;
+            } else {
+                throw new Error(`Regra MPC: Serviço '${fallbackService}' é obrigatório mas não foi encontrado.`);
+            }
+        } else {
+            for (const priority of servicePriorities) {
+                if (availableServices.includes(priority)) {
+                    serviceToSelect = priority;
+                    break;
+                }
+            }
+            if (!serviceToSelect) {
+                if (availableServices.includes(fallbackService)) {
+                    serviceToSelect = fallbackService;
+                } else {
+                    throw new Error("Nenhum serviço prioritário ou de fallback ('Reparo MPC') foi encontrado.");
+                }
+            }
+        }
+
+        log(`Serviço selecionado pela lógica: '${serviceToSelect}'`, 'success');
+        const serviceOptionToClick = serviceOptions.find(opt => opt.textContent.trim().toLowerCase() === serviceToSelect);
+        if (serviceOptionToClick) {
+            serviceOptionToClick.click();
+            await h.wait(TIMING.CLICK_WAIT);
+        } else {
+            throw new Error(`Elemento da opção de serviço '${serviceToSelect}' não pôde ser clicado.`);
+        }
+
+        await h.click("[data-testid='btn-Continuar']");
+        log("Fluxo de encaminhamento externo finalizado.", 'success');
+    }
+    
     // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO) =========
     async executeAutomation() {
       if (!this.selectedItem || this.isLoading) return;
@@ -1134,40 +1283,6 @@
         log(`Seleção da opção '${optionText}' concluída com sucesso.`, 'success');
       };
 
-      const handleDependentProblemService = async (problemText, serviceText) => {
-        log("=== Iniciando seleção dependente Problema → Serviço ===", 'info');
-
-        log(`Selecionando problema: '${problemText}'`);
-        await handleNzSelect({
-          inputSelector: SELECTORS.PROBLEM_SELECT,
-          valueToType: problemText,
-          optionText: problemText,
-        });
-
-        log("Fechando dropdown do problema antes de prosseguir com serviço...", 'wait');
-        await h.click(SELECTORS.PROBLEM_SELECT, true);
-        await h.wait(TIMING.ANIMATION_DURATION);
-
-        if (serviceText && serviceText.trim() !== '') {
-          log("Aguardando habilitação do campo de serviço...", 'wait');
-          const serviceElement = await waitForElementEnabled(SELECTORS.SERVICE_SELECT, true, 10000);
-          if (!serviceElement) {
-            throw new Error("Campo de serviço não foi habilitado dentro do tempo limite");
-          }
-
-          log(`Selecionando serviço: '${serviceText}'`);
-          await handleNzSelect({
-            inputSelector: SELECTORS.SERVICE_SELECT,
-            valueToType: serviceText,
-            optionText: serviceText,
-          });
-
-          log("=== Seleção dependente concluída com sucesso ===", 'success');
-        } else {
-          log("Nenhum serviço configurado - pulando seleção de serviço");
-        }
-      };
-
       try {
         log("Etapa 1 & 2: Executando envio de mensagem e etiquetagem interna em paralelo.");
         const automationTasks = [];
@@ -1223,37 +1338,7 @@
         // Etapa 3: Ações Pós-Envio (executadas sequencialmente, conforme solicitado).
         log("Etapa 3: Iniciando ações pós-envio.");
         if (this.selectedItem.externo) {
-          log("Iniciando fluxo de encaminhamento externo com seleção dependente.");
-          await h.click(SELECTORS.FORWARD_BUTTON);
-          
-          log("Aguardando modal de encaminhamento aparecer...");
-          await h.wait(TIMING.ANIMATION_DURATION + 200);
-
-          if (document.getElementById("externalCallCheckbox").checked) {
-            log("Opção 'Aguardar chamado externo' selecionada.");
-            if (!(await h.click("//lib-input-switch//button", true))) {
-                throw new Error("Não foi possível clicar no botão SWITCH de 'Aguardar chamado externo'.");
-            }
-          }
-
-          log("Selecionando setor 'suporte externo'.");
-          await handleNzSelect({
-            inputSelector: SELECTORS.SECTOR_SELECT,
-            optionText: "suporte externo",
-          });
-
-          const etiquetaExterna = (useFallback || !this.selectedItem.etiquetaExterna)
-              ? this.selectedItem.etiquetaExternaFallback
-              : this.selectedItem.etiquetaExterna;
-
-          await handleDependentProblemService(
-            etiquetaExterna,
-            this.selectedItem.servicoExterno
-          );
-
-          await h.click("[data-testid='btn-Continuar']");
-          log("Fluxo de encaminhamento externo finalizado.", 'success');
-
+          await this.executeExternalForwardingFlow(this.selectedItem, useFallback);
         } else if (document.getElementById("reminderCheckbox").checked) {
           log("Adicionando lembrete.");
           if (await h.click(SELECTORS.MORE_BUTTON)) {
