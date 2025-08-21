@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      5.0
-// @description  Sistema de automação com filtros avançados, interface e seção de resumo aprimorados. Lógica de seleção ajustada para maior precisão e flexibilidade.
+// @version      5.1
+// @description  Sistema de automação com lógica de seleção aprimorada, busca flexível e novas regras de prioridade.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
 // @grant        none
@@ -49,15 +49,9 @@
   };
 
   // ═════════════════════════════════════════════════════════════════
-  // ✅ FUNÇÕES UTILITÁRIAS ATUALIZADAS
+  // ✅ FUNÇÕES UTILITÁRIAS
   // ═════════════════════════════════════════════════════════════════
 
-  /**
-   * Normaliza um texto para comparação, removendo acentos, espaços extras,
-   * convertendo para minúsculas e aparando espaços no início/fim.
-   * @param {string} text O texto a ser normalizado.
-   * @returns {string} O texto normalizado.
-   */
   const normalizeText = (text = "") => {
     if (typeof text !== 'string') return '';
     return text
@@ -108,7 +102,6 @@
     log(`Timeout: Elemento não habilitado após ${timeout}ms: '${selector}'`, 'error');
     return null;
   };
-
 
   // ═════════════════════════════════════════════════════════════════
   // 🧠 CLASSE PRINCIPAL
@@ -656,7 +649,7 @@
       const useFallback = document.getElementById("fallbackTagCheckbox").checked;
       let tags = [];
 
-      const etiquetaInterna = (useFallback || !this.selectedItem.etiquetaInterna)
+      const etiquetaInterna = useFallback
         ? this.selectedItem.etiquetaInternaFallback
         : this.selectedItem.etiquetaInterna;
         
@@ -665,7 +658,7 @@
       }
 
       if (this.selectedItem.externo) {
-        const etiquetaExterna = (useFallback || !this.selectedItem.etiquetaExterna)
+        const etiquetaExterna = useFallback
           ? this.selectedItem.etiquetaExternaFallback
           : this.selectedItem.etiquetaExterna;
         if (etiquetaExterna) {
@@ -932,8 +925,9 @@
         log("Selecionando setor 'suporte externo'.");
         await h.click(SELECTORS.SECTOR_SELECT, true);
         const normalizedSector = normalizeText("suporte externo");
-        const sectorOption = await h.find(`//li[contains(@class, 'ant-select-dropdown-menu-item') and normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedSector}']`, true);
-        if(!sectorOption) throw new Error("Opção de setor 'suporte externo' não encontrada.");
+        const sectorOptionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item')][normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedSector}']`;
+        const sectorOption = await h.find(sectorOptionSelector, true);
+        if (!sectorOption) throw new Error("Opção de setor 'suporte externo' não encontrada.");
         sectorOption.click();
         await h.wait(TIMING.CLICK_WAIT);
 
@@ -943,14 +937,13 @@
         await h.wait(TIMING.FILTER_WAIT);
         
         const problemOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        let matchedProblemOption = null;
+        const problemOptions = [];
         for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
-            const opt = problemOptionsNodeList.snapshotItem(i);
-            if (normalizeText(opt.textContent) === normalizeText(etiquetaExternaSearchText)) {
-                matchedProblemOption = opt;
-                break;
-            }
+            problemOptions.push(problemOptionsNodeList.snapshotItem(i));
         }
+
+        const normalizedSearchText = normalizeText(etiquetaExternaSearchText);
+        const matchedProblemOption = problemOptions.find(opt => normalizeText(opt.textContent).startsWith(normalizedSearchText));
 
         if (!matchedProblemOption) {
             throw new Error(`Nenhuma Etiqueta Externa encontrada para '${etiquetaExternaSearchText}'`);
@@ -986,7 +979,7 @@
                 serviceToSelect = normalizeText("reparo mpc");
             } else {
                 log("Serviço 'reparo mpc' não encontrado. Selecionando a primeira opção disponível.", 'wait');
-                await h.type(SELECTORS.SERVICE_SELECT, '', true); // Limpa o campo
+                await h.type(SELECTORS.SERVICE_SELECT, '', true); 
                 await h.wait(TIMING.CLICK_WAIT);
                 const firstOption = await h.find(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li[1]`, true);
                 if (firstOption) {
@@ -1095,32 +1088,32 @@
         },
       };
       
-      const handleNzSelect = async ({ inputSelector, valueToType, optionText }) => {
-        log(`Iniciando seleção em dropdown. Opção desejada: '${optionText}'`);
-      
+      const handleNzSelectStrict = async ({ inputSelector, valueToType, optionText }) => {
+        log(`Iniciando seleção estrita em dropdown. Opção: '${optionText}'`);
+
         if (!(await h.click(inputSelector, true))) {
           throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
         }
-      
+
         if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true))) {
           throw new Error("Dropdown do select não apareceu.");
         }
-      
+
         if (valueToType) {
           if (!(await h.type(inputSelector, valueToType, true))) {
             throw new Error(`Não foi possível digitar em: ${inputSelector}`);
           }
           await h.wait(TIMING.FILTER_WAIT);
         }
-      
+
         const normalizedOptionText = normalizeText(optionText);
-        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedOptionText}']`;
+        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item')][normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedOptionText}']`;
         
-        if (await h.click(optionSelector, true)) {
-          log(`Opção '${optionText}' encontrada e clicada com sucesso.`, 'success');
-        } else {
-          throw new Error(`Não foi possível encontrar a opção exata: ${optionText}`);
+        if (!(await h.click(optionSelector, true))) {
+            throw new Error(`Não foi possível selecionar a opção exata: ${optionText}`);
         }
+
+        log(`Seleção estrita da opção '${optionText}' concluída.`, 'success');
       };
 
       try {
@@ -1148,15 +1141,15 @@
         };
         automationTasks.push(sendMessageTask());
         
-        const etiquetaInterna = (useFallback || !this.selectedItem.etiquetaInterna)
-          ? this.selectedItem.etiquetaInternaFallback
-          : this.selectedItem.etiquetaInterna;
+        const etiquetaInterna = useFallback
+            ? this.selectedItem.etiquetaInternaFallback
+            : this.selectedItem.etiquetaInterna;
 
         if (etiquetaInterna) {
           const addInternalTagTask = async () => {
             log("Sub-tarefa: Aplicar tag interna.");
             if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
-              await handleNzSelect({
+              await handleNzSelectStrict({
                 inputSelector: SELECTORS.TAG_INPUT,
                 valueToType: etiquetaInterna,
                 optionText: etiquetaInterna,
