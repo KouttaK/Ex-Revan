@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      4.9
-// @description  Sistema de automação com filtros avançados, interface e seção de resumo aprimorados.
+// @version      5.0
+// @description  Sistema de automação com filtros avançados, interface e seção de resumo aprimorados. Lógica de seleção ajustada para maior precisão e flexibilidade.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
 // @grant        none
@@ -45,14 +45,29 @@
       TOAST_DURATION: 4000,
       FILTER_WAIT: 400,
     },
-    UI: { MODAL_MAX_HEIGHT: "85vh" }, // Esta variável não é mais usada no CSS, mas pode ser mantida para referência
+    UI: { MODAL_MAX_HEIGHT: "85vh" },
   };
 
   // ═════════════════════════════════════════════════════════════════
-  // ✅ NOVAS FUNÇÕES (Sem testes)
+  // ✅ FUNÇÕES UTILITÁRIAS ATUALIZADAS
   // ═════════════════════════════════════════════════════════════════
 
-  // Aguarda até que um elemento (select) esteja habilitado (não possua classe de disabled)
+  /**
+   * Normaliza um texto para comparação, removendo acentos, espaços extras,
+   * convertendo para minúsculas e aparando espaços no início/fim.
+   * @param {string} text O texto a ser normalizado.
+   * @returns {string} O texto normalizado.
+   */
+  const normalizeText = (text = "") => {
+    if (typeof text !== 'string') return '';
+    return text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   const waitForElementEnabled = async (selector, isXPath = false, timeout = 10000) => {
     const log = (msg, status = 'info') => {
       const prefix = "[Service Selection]";
@@ -94,144 +109,6 @@
     return null;
   };
 
-  // Lida com seleção dependente problema -> serviço em selects do Ant Design
-  const handleDependentServiceSelection = async ({
-    problemSelector,
-    serviceSelector,
-    problemValue,
-    serviceValue,
-    optionSelectorTemplate = "//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{value}')]",
-    genericDropdownSelector = "//div[contains(@class, 'ant-select-dropdown') and not(contains(@class, 'ant-select-dropdown-hidden'))]//ul[contains(@class, 'ant-select-dropdown-menu')]",
-    timing = { clickWait: 300, typeWait: 200, enableWait: 1000, filterWait: 400 }
-  }) => {
-
-    const log = (msg, status = 'info') => {
-      const prefix = "[Dependent Service]";
-      switch (status) {
-        case 'success': console.log(`%c${prefix} ✅ ${msg}`, 'color: #10b981; font-weight: bold;'); break;
-        case 'error': console.error(`${prefix} ❌ ${msg}`); break;
-        case 'wait': console.log(`%c${prefix} ⏳ ${msg}`, 'color: #f59e0b;'); break;
-        default: console.info(`%c${prefix} ➡️ ${msg}`, 'color: #3b82f6;'); break;
-      }
-    };
-    const wait = ms => new Promise(r => setTimeout(r, ms));
-
-    const findElement = async (selector, xpath = false, timeout = 5000) => {
-      const start = Date.now();
-      while (Date.now() - start < timeout) {
-        const el = xpath
-          ? document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-          : document.querySelector(selector);
-        if (el) return el;
-        await wait(200);
-      }
-      return null;
-    };
-
-    const clickElement = async (selector, xpath = false) => {
-      const el = await findElement(selector, xpath);
-      if (el) {
-        el.click();
-        await wait(timing.clickWait);
-        return true;
-      }
-      return false;
-    };
-
-    const typeInElement = async (selector, text, xpath = false) => {
-      const el = await findElement(selector, xpath);
-      if (el) {
-        el.value = text;
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        el.dispatchEvent(new Event("change", { bubbles: true }));
-        await wait(timing.typeWait);
-        return true;
-      }
-      return false;
-    };
-
-    try {
-      // Problema
-      log(`Selecionando problema: '${problemValue}'`);
-      if (!await clickElement(problemSelector, true))
-        throw new Error(`Clique falhou em: ${problemSelector}`);
-
-      if (!await findElement(genericDropdownSelector, true))
-        throw new Error("Dropdown do problema não apareceu");
-
-      if (!await typeInElement(problemSelector, problemValue, true))
-        throw new Error("Falha ao digitar no campo de problema");
-
-      await wait(timing.filterWait);
-
-      const problemOptionSelector = optionSelectorTemplate.replace('{value}', problemValue.toLowerCase());
-      if (!await clickElement(problemOptionSelector, true))
-        throw new Error(`Opção de problema não encontrada: ${problemValue}`);
-
-      log(`Problema '${problemValue}' selecionado.`, 'success');
-
-      // Serviço dependente
-      log("Aguardando habilitação do serviço...", 'wait');
-      await wait(timing.enableWait);
-
-      const serviceEl = await waitForElementEnabled(serviceSelector, true, 10000);
-      if (!serviceEl)
-        throw new Error("Campo de serviço não habilitou");
-
-      if (serviceValue && serviceValue.trim() !== '') {
-        log(`Selecionando serviço: '${serviceValue}'`);
-        if (!await clickElement(serviceSelector, true))
-          throw new Error("Falha ao clicar no campo de serviço");
-
-        if (!await findElement(genericDropdownSelector, true))
-          throw new Error("Dropdown do serviço não apareceu");
-
-        if (!await typeInElement(serviceSelector, serviceValue, true))
-          throw new Error("Falha ao digitar no serviço");
-
-        await wait(timing.filterWait);
-
-        const serviceOptionSelector = optionSelectorTemplate.replace('{value}', serviceValue.toLowerCase());
-        if (!await clickElement(serviceOptionSelector, true))
-          throw new Error(`Opção de serviço não encontrada: ${serviceValue}`);
-
-        log(`Serviço '${serviceValue}' selecionado.`, 'success');
-      } else {
-        log("Nenhum serviço configurado - etapa ignorada.");
-      }
-
-      return { success: true, message: "Seleção dependente concluída" };
-
-    } catch (error) {
-      log(`Erro: ${error.message}`, 'error');
-      return { success: false, error: error.message };
-    }
-  };
-
-  // Integra no fluxo existente (uso genérico)
-  const executeServiceSelection = async (selectedItem, selectors, timing) => {
-    if (!selectedItem.externo || !selectedItem.servicoExterno) {
-      return { success: true, message: "Nenhum serviço externo configurado" };
-    }
-    
-    const useFallback = document.getElementById("fallbackTagCheckbox").checked;
-    const etiquetaExterna = (useFallback || !selectedItem.etiquetaExterna) 
-        ? selectedItem.etiquetaExternaFallback 
-        : selectedItem.etiquetaExterna;
-
-    return await handleDependentServiceSelection({
-      problemSelector: selectors.PROBLEM_SELECT,
-      serviceSelector: selectors.SERVICE_SELECT,
-      problemValue: etiquetaExterna,
-      serviceValue: selectedItem.servicoExterno,
-      timing: {
-        clickWait: timing.CLICK_WAIT,
-        typeWait: timing.TYPE_WAIT,
-        enableWait: timing.DEFAULT_WAIT,
-        filterWait: timing.FILTER_WAIT
-      }
-    });
-  };
 
   // ═════════════════════════════════════════════════════════════════
   // 🧠 CLASSE PRINCIPAL
@@ -256,24 +133,17 @@
       this.init();
     }
 
-    // ========= MÉTODO INIT (ATUALIZADO) =========
     async init() {
       try {
-        // Carrega todos os recursos. `loadAssets` cria um botão temporário para feedback.
         await this.loadAssets();
-
-        // 🟢 [CORREÇÃO] Remove o botão temporário antes de injetar o HTML final.
-        // Isso evita o problema do botão duplicado.
         const tempBtn = document.getElementById("automationFloatingBtn");
         if (tempBtn) {
             tempBtn.remove();
         }
 
-        // Continua com a injeção da UI permanente.
         this.injectStyles();
         this.injectHTML();
 
-        // Configura os listeners e o estado inicial da aplicação.
         this.setupEventListeners();
         this.setupAccordionFunctionality();
         this.setupFilters();
@@ -283,7 +153,6 @@
         console.error("Erro na inicialização:", error);
         this.showToast("Falha ao carregar a automação.", "error");
 
-        // 🟢 [CORREÇÃO] Garante que o botão temporário seja removido também em caso de erro.
         const tempBtnOnError = document.getElementById("automationFloatingBtn");
         if (tempBtnOnError) {
             tempBtnOnError.remove();
@@ -305,8 +174,6 @@
     }
 
     async loadAssets() {
-      // Este botão é temporário, apenas para indicar o carregamento inicial.
-      // Ele será removido no método `init` após o carregamento ser concluído.
       const btn = document.createElement("button");
       btn.id = "automationFloatingBtn";
       btn.className = "ua-automation-floating-btn";
@@ -337,11 +204,9 @@
       } catch (error) {
         console.error("Erro ao carregar assets:", error);
         this.showToast(error.message, "error");
-        throw error; // Propaga o erro para o init() lidar com ele
+        throw error;
       } finally {
         this.setLoading(false, btn, iconSVG);
-        // O comentário abaixo é chave: o botão real será inserido pelo `injectHTML`.
-        // A lógica de remoção foi movida para o `init` para maior clareza.
         const tempBtn = document.getElementById("automationFloatingBtn");
         if (tempBtn && !document.getElementById("ua-container")) {
             tempBtn.title = "Abrir Automação (Ctrl + Espaço)";
@@ -351,7 +216,6 @@
 
     setupEventListeners() {
       const floatingBtn = document.getElementById("automationFloatingBtn");
-      // Se o botão já existe de uma carga anterior, remove para evitar duplicatas
       if (floatingBtn.getAttribute('data-listener-attached')) return;
       
       floatingBtn.addEventListener("click", () => this.toggleModal(true));
@@ -392,7 +256,7 @@
         "externalCallCheckbox",
         "reminderCheckbox",
         "importantCheckbox",
-        "fallbackTagCheckbox", // Adicionado listener para o novo checkbox
+        "fallbackTagCheckbox",
       ].forEach(id =>
         document
           .getElementById(id)
@@ -413,7 +277,6 @@
         .addEventListener("click", () => this.toggleEditModal(false));
       document.addEventListener("keydown", this.handleGlobalKeydown.bind(this));
 
-      // Clique em checkmark e container customizados
       document.addEventListener("click", (e) => {
         try {
           if (e.target?.classList?.contains("ua-checkmark")) {
@@ -593,18 +456,17 @@
     }
 
     handleSearch(e) {
-      const filter = e.target.value.toLowerCase().trim();
-      document
-        .getElementById("clearButton")
-        .classList.toggle("ua-hidden", !filter);
-      if (filter) {
-        const f = this.filteredItems.filter(
-          i =>
-            i.nome.toLowerCase().includes(filter) ||
-            (i.mensagem && i.mensagem.toLowerCase().includes(filter))
-        );
-        this.populateDropdown(f, filter);
-        this.showDropdown(true); // Sempre mostra o dropdown para exibir a mensagem de "nenhum resultado"
+      const query = normalizeText(e.target.value);
+      document.getElementById("clearButton").classList.toggle("ua-hidden", !query);
+    
+      if (query) {
+        const filtered = this.filteredItems.filter(item => {
+          const normalizedName = normalizeText(item.nome);
+          const normalizedMessage = normalizeText(item.mensagem);
+          return normalizedName.includes(query) || normalizedMessage.includes(query);
+        });
+        this.populateDropdown(filtered, query);
+        this.showDropdown(true);
       } else {
         this.showDropdown(false);
       }
@@ -1056,7 +918,7 @@
             throw new Error("Etiqueta Externa de busca não foi definida para este item.");
         }
 
-        log("Iniciando fluxo de encaminhamento externo com nova lógica de negócio.");
+        log("Iniciando fluxo de encaminhamento externo.");
         await h.click(SELECTORS.FORWARD_BUTTON);
         await h.wait(TIMING.ANIMATION_DURATION + 200);
 
@@ -1069,29 +931,29 @@
         
         log("Selecionando setor 'suporte externo'.");
         await h.click(SELECTORS.SECTOR_SELECT, true);
-        const sectorOption = await h.find(`//li[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'suporte externo')]`, true);
+        const normalizedSector = normalizeText("suporte externo");
+        const sectorOption = await h.find(`//li[contains(@class, 'ant-select-dropdown-menu-item') and normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedSector}']`, true);
         if(!sectorOption) throw new Error("Opção de setor 'suporte externo' não encontrada.");
         sectorOption.click();
         await h.wait(TIMING.CLICK_WAIT);
 
-
-        log(`Buscando Etiqueta Externa com prefixo: '${etiquetaExternaSearchText}'`);
+        log(`Buscando Etiqueta Externa: '${etiquetaExternaSearchText}'`);
         await h.click(SELECTORS.PROBLEM_SELECT, true);
         await h.type(SELECTORS.PROBLEM_SELECT, etiquetaExternaSearchText, true);
         await h.wait(TIMING.FILTER_WAIT);
         
         const problemOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        const problemOptions = [];
+        let matchedProblemOption = null;
         for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
-            problemOptions.push(problemOptionsNodeList.snapshotItem(i));
+            const opt = problemOptionsNodeList.snapshotItem(i);
+            if (normalizeText(opt.textContent) === normalizeText(etiquetaExternaSearchText)) {
+                matchedProblemOption = opt;
+                break;
+            }
         }
 
-        const matchedProblemOption = problemOptions.find(opt =>
-            opt.textContent.trim().toLowerCase().startsWith(etiquetaExternaSearchText.toLowerCase())
-        );
-
         if (!matchedProblemOption) {
-            throw new Error(`Nenhuma Etiqueta Externa encontrada com o prefixo '${etiquetaExternaSearchText}'`);
+            throw new Error(`Nenhuma Etiqueta Externa encontrada para '${etiquetaExternaSearchText}'`);
         }
 
         const selectedProblemText = matchedProblemOption.textContent.trim();
@@ -1099,7 +961,7 @@
         matchedProblemOption.click();
         await h.wait(TIMING.CLICK_WAIT);
 
-        const isMpcRequired = selectedProblemText.toLowerCase().includes("mpc");
+        const isMpcRequired = normalizeText(selectedProblemText).includes("mpc");
         log(`Verificação MPC: ${isMpcRequired ? 'OBRIGATÓRIO' : 'NÃO OBRIGATÓRIO'}`);
 
         log("Aguardando habilitação do campo de serviço...");
@@ -1114,37 +976,52 @@
         for (let i = 0; i < serviceOptionsNodeList.snapshotLength; i++) {
             serviceOptions.push(serviceOptionsNodeList.snapshotItem(i));
         }
-        const availableServices = serviceOptions.map(opt => opt.textContent.trim().toLowerCase());
+        const availableServices = serviceOptions.map(opt => normalizeText(opt.textContent));
         log(`Serviços disponíveis: [${availableServices.join(', ')}]`);
 
         let serviceToSelect = null;
-        const servicePriorities = ["reparo rápido", "reparo físico", "serviço adicional"];
-        const fallbackService = "reparo mpc";
 
         if (isMpcRequired) {
-            if (availableServices.includes(fallbackService)) {
-                serviceToSelect = fallbackService;
+            if (availableServices.includes(normalizeText("reparo mpc"))) {
+                serviceToSelect = normalizeText("reparo mpc");
             } else {
-                throw new Error(`Regra MPC: Serviço '${fallbackService}' é obrigatório mas não foi encontrado.`);
+                log("Serviço 'reparo mpc' não encontrado. Selecionando a primeira opção disponível.", 'wait');
+                await h.type(SELECTORS.SERVICE_SELECT, '', true); // Limpa o campo
+                await h.wait(TIMING.CLICK_WAIT);
+                const firstOption = await h.find(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li[1]`, true);
+                if (firstOption) {
+                    firstOption.click();
+                    await h.wait(TIMING.CLICK_WAIT);
+                    await h.click("[data-testid='btn-Continuar']");
+                    log("Fluxo de encaminhamento externo finalizado com a primeira opção.", 'success');
+                    return;
+                } else {
+                    throw new Error("Regra MPC: Serviço 'reparo mpc' não encontrado e nenhuma outra opção disponível.");
+                }
             }
         } else {
-            for (const priority of servicePriorities) {
+            const priorityList = [
+                normalizeText(selectedItem.servicoExterno),
+                normalizeText("reparo rápido"),
+                normalizeText("reparo físico"),
+                normalizeText("serviço adicional"),
+                normalizeText("reparo mpc")
+            ].filter(Boolean);
+
+            for (const priority of priorityList) {
                 if (availableServices.includes(priority)) {
                     serviceToSelect = priority;
                     break;
                 }
             }
+
             if (!serviceToSelect) {
-                if (availableServices.includes(fallbackService)) {
-                    serviceToSelect = fallbackService;
-                } else {
-                    throw new Error("Nenhum serviço prioritário ou de fallback ('Reparo MPC') foi encontrado.");
-                }
+                 throw new Error("Nenhum serviço prioritário ou de fallback foi encontrado.");
             }
         }
 
         log(`Serviço selecionado pela lógica: '${serviceToSelect}'`, 'success');
-        const serviceOptionToClick = serviceOptions.find(opt => opt.textContent.trim().toLowerCase() === serviceToSelect);
+        const serviceOptionToClick = serviceOptions.find(opt => normalizeText(opt.textContent) === serviceToSelect);
         if (serviceOptionToClick) {
             serviceOptionToClick.click();
             await h.wait(TIMING.CLICK_WAIT);
@@ -1156,7 +1033,6 @@
         log("Fluxo de encaminhamento externo finalizado.", 'success');
     }
     
-    // ========= MÉTODO EXECUTE AUTOMATION (ATUALIZADO) =========
     async executeAutomation() {
       if (!this.selectedItem || this.isLoading) return;
 
@@ -1219,75 +1095,38 @@
         },
       };
       
-      const clickNzSelectOptionWithFallback = async (optionText) => {
-          log(`Tentando selecionar a opção: '${optionText}' com fallbacks.`);
-
-          // Fallback 1: Busca exata (case-insensitive, ignorando espaços extras)
-          let optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='${optionText.toLowerCase()}']`;
-          if (await h.click(optionSelector, true)) {
-              log(`Opção exata '${optionText}' encontrada e clicada.`, 'success');
-              return true;
-          }
-          log(`Opção exata '${optionText}' não encontrada.`, 'wait');
-
-          // Fallback 2: Busca por "MCP" com prioridade
-          optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'mcp')]`;
-          if (await h.click(optionSelector, true)) {
-              log(`Opção de fallback com 'mcp' encontrada e clicada.`, 'success');
-              return true;
-          }
-          log(`Nenhuma opção com 'mcp' encontrada.`, 'wait');
-
-          // Fallback 3: Qualquer opção exceto "Migração de Tv", a menos que seja o texto exato
-          if (optionText.toLowerCase() !== 'migração de tv') {
-              optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and not(contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'migração de tv'))]`;
-              if (await h.click(optionSelector, true)) {
-                  log(`Opção de fallback (não 'Migração de Tv') encontrada e clicada.`, 'success');
-                  return true;
-              }
-              log(`Nenhuma opção de fallback (não 'Migração de Tv') encontrada.`, 'wait');
-          }
-
-          // Fallback 4: Se tudo falhar, tenta clicar na primeira opção disponível
-          optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item')]`;
-          if(await h.click(optionSelector, true)){
-              log(`Último fallback: clicou na primeira opção disponível.`, 'success');
-              return true;
-          }
-
-          return false;
-      };
-
       const handleNzSelect = async ({ inputSelector, valueToType, optionText }) => {
-        log(`Iniciando seleção em dropdown (antd). Opção: '${optionText}'`);
-
+        log(`Iniciando seleção em dropdown. Opção desejada: '${optionText}'`);
+      
         if (!(await h.click(inputSelector, true))) {
           throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
         }
-
+      
         if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true))) {
           throw new Error("Dropdown do select não apareceu.");
         }
-
+      
         if (valueToType) {
           if (!(await h.type(inputSelector, valueToType, true))) {
             throw new Error(`Não foi possível digitar em: ${inputSelector}`);
           }
           await h.wait(TIMING.FILTER_WAIT);
         }
-
-        if (!(await clickNzSelectOptionWithFallback(optionText))) {
-            throw new Error(`Não foi possível selecionar a opção: ${optionText} mesmo com fallbacks.`);
+      
+        const normalizedOptionText = normalizeText(optionText);
+        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item') and normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedOptionText}']`;
+        
+        if (await h.click(optionSelector, true)) {
+          log(`Opção '${optionText}' encontrada e clicada com sucesso.`, 'success');
+        } else {
+          throw new Error(`Não foi possível encontrar a opção exata: ${optionText}`);
         }
-
-        log(`Seleção da opção '${optionText}' concluída com sucesso.`, 'success');
       };
 
       try {
         log("Etapa 1 & 2: Executando envio de mensagem e etiquetagem interna em paralelo.");
         const automationTasks = [];
 
-        // Tarefa 1: Enviar a mensagem principal.
         const sendMessageTask = async () => {
           log("Sub-tarefa: Inserir e enviar mensagem principal.");
           if (!(await h.find(SELECTORS.MAIN_TEXT_AREA))) {
@@ -1309,7 +1148,6 @@
         };
         automationTasks.push(sendMessageTask());
         
-        // Tarefa 2: Aplicar a etiqueta interna.
         const etiquetaInterna = (useFallback || !this.selectedItem.etiquetaInterna)
           ? this.selectedItem.etiquetaInternaFallback
           : this.selectedItem.etiquetaInterna;
@@ -1331,11 +1169,9 @@
           automationTasks.push(addInternalTagTask());
         }
 
-        // Aguarda a conclusão das tarefas de mensagem e tag.
         await Promise.all(automationTasks);
         log("Etapas de mensagem e tag concluídas.", 'success');
         
-        // Etapa 3: Ações Pós-Envio (executadas sequencialmente, conforme solicitado).
         log("Etapa 3: Iniciando ações pós-envio.");
         if (this.selectedItem.externo) {
           await this.executeExternalForwardingFlow(this.selectedItem, useFallback);
@@ -1370,12 +1206,9 @@
     }
   }
 
-  // Exportações (caso usado em ambiente de testes externos / bundlers)
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-      handleDependentServiceSelection,
-      executeServiceSelection,
-      waitForElementEnabled
+      AttendanceAutomation
     };
   }
 
