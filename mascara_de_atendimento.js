@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      5.1
+// @version      5.4
 // @description  Sistema de automação com lógica de seleção aprimorada, busca flexível e novas regras de prioridade.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
@@ -56,7 +56,7 @@
     if (typeof text !== 'string') return '';
     return text
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[\u0300-\u036f]/g, "") // CORREÇÃO: Removido \u3000
       .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim();
@@ -66,9 +66,9 @@
     const log = (msg, status = 'info') => {
       const prefix = "[Service Selection]";
       switch (status) {
-        case 'success': console.log(`%c${prefix} ✅ ${msg}`, 'color: #10b981; font-weight: bold;'); break;
+        case 'success': console.info(`%c${prefix} ✅ ${msg}`, 'color: #10b981; font-weight: bold;'); break;
         case 'error': console.error(`${prefix} ❌ ${msg}`); break;
-        case 'wait': console.log(`%c${prefix} ⏳ ${msg}`, 'color: #f59e0b;'); break;
+        case 'wait': console.info(`%c${prefix} ⏳ ${msg}`, 'color: #f59e0b;'); break;
         default: console.info(`%c${prefix} ➡️ ${msg}`, 'color: #3b82f6;'); break;
       }
     };
@@ -847,13 +847,13 @@
       const prefix = "[UA Log]";
       switch (status) {
         case 'success':
-          console.log(`%c${prefix} ✅ ${message}`, 'color: #10b981; font-weight: bold;');
+          console.info(`%c${prefix} ✅ ${message}`, 'color: #10b981; font-weight: bold;');
           break;
         case 'error':
           console.error(`${prefix} ❌ ${message}`);
           break;
         case 'wait':
-          console.log(`%c${prefix} ⏳ ${message}`, 'color: #f59e0b;');
+          console.info(`%c${prefix} ⏳ ${message}`, 'color: #f59e0b;');
           break;
         case 'info':
         default:
@@ -1090,30 +1090,45 @@
       
       const handleNzSelectStrict = async ({ inputSelector, valueToType, optionText }) => {
         log(`Iniciando seleção estrita em dropdown. Opção: '${optionText}'`);
-
+      
         if (!(await h.click(inputSelector, true))) {
           throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
         }
-
-        if (!(await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true))) {
+      
+        const dropdownMenu = await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true);
+        if (!dropdownMenu) {
           throw new Error("Dropdown do select não apareceu.");
         }
-
+      
         if (valueToType) {
           if (!(await h.type(inputSelector, valueToType, true))) {
             throw new Error(`Não foi possível digitar em: ${inputSelector}`);
           }
           await h.wait(TIMING.FILTER_WAIT);
         }
-
+      
         const normalizedOptionText = normalizeText(optionText);
-        const optionSelector = `//li[contains(@class, 'ant-select-dropdown-menu-item')][normalize-space(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))='${normalizedOptionText}']`;
+        const optionsNodeList = document.evaluate(".//li[contains(@class, 'ant-select-dropdown-menu-item')]", dropdownMenu, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         
-        if (!(await h.click(optionSelector, true))) {
-            throw new Error(`Não foi possível selecionar a opção exata: ${optionText}`);
+        let foundOption = null;
+        for (let i = 0; i < optionsNodeList.snapshotLength; i++) {
+            const optionElement = optionsNodeList.snapshotItem(i);
+            const currentOptionText = normalizeText(optionElement.innerText); 
+      
+            if (currentOptionText === normalizedOptionText) {
+                log(`Correspondência exata encontrada: '${currentOptionText}'`, 'success');
+                foundOption = optionElement;
+                break;
+            }
         }
-
-        log(`Seleção estrita da opção '${optionText}' concluída.`, 'success');
+      
+        if (foundOption) {
+            foundOption.click();
+            await h.wait(TIMING.CLICK_WAIT);
+            log(`Seleção estrita da opção '${optionText}' concluída.`, 'success');
+        } else {
+            throw new Error(`Não foi possível encontrar a opção exata: ${optionText}`);
+        }
       };
 
       try {
