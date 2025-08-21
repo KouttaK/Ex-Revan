@@ -1069,7 +1069,7 @@
         
         log("Selecionando setor 'suporte externo'.");
         await h.click(SELECTORS.SECTOR_SELECT, true);
-        const sectorOption = await h.find(`//li[contains(text(), 'suporte externo')]`, true);
+        const sectorOption = await h.find(`//li[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'suporte externo')]`, true);
         if(!sectorOption) throw new Error("Opção de setor 'suporte externo' não encontrada.");
         sectorOption.click();
         await h.wait(TIMING.CLICK_WAIT);
