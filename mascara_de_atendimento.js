@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      5.5
+// @version      5.6
 // @description  Sistema de automação com lógica de seleção aprimorada, busca flexível e novas regras de prioridade.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
@@ -1121,7 +1121,7 @@
         let foundOption = null;
         for (let i = 0; i < optionsNodeList.snapshotLength; i++) {
             const optionElement = optionsNodeList.snapshotItem(i);
-            const currentOptionText = normalizeText(optionElement.innerText);
+            const currentOptionText = normalizeText(optionElement.textContent);
       
             if (currentOptionText.startsWith(normalizedSearchText)) {
                 log(`Correspondência de prefixo encontrada: '${currentOptionText}'`, 'success');
@@ -1172,7 +1172,7 @@
             if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
               await handleNzSelectPrefix({
                 inputSelector: SELECTORS.TAG_INPUT,
-                valueToType: etiquetaInterna
+                valueToType: etiquetaInterna,
               });
               await h.click("[data-testid='btn-Concluir']");
             } else {
