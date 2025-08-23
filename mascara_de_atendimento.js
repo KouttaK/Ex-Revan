@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      5.4
+// @version      5.5
 // @description  Sistema de automação com lógica de seleção aprimorada, busca flexível e novas regras de prioridade.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
@@ -56,7 +56,7 @@
     if (typeof text !== 'string') return '';
     return text
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // CORREÇÃO: Removido \u3000
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim();
@@ -649,9 +649,7 @@
       const useFallback = document.getElementById("fallbackTagCheckbox").checked;
       let tags = [];
 
-      const etiquetaInterna = useFallback
-        ? this.selectedItem.etiquetaInternaFallback
-        : this.selectedItem.etiquetaInterna;
+      const etiquetaInterna = this.selectedItem.etiquetaInterna;
         
       if (etiquetaInterna) {
         tags.push({ text: etiquetaInterna, type: 'internal', category: 'Interna' });
@@ -903,14 +901,35 @@
             },
         };
 
-        const etiquetaExternaSearchText = (useFallback || !selectedItem.etiquetaExterna) ?
-            selectedItem.etiquetaExternaFallback :
-            selectedItem.etiquetaExterna;
-
-        if (!etiquetaExternaSearchText) {
-            throw new Error("Etiqueta Externa de busca não foi definida para este item.");
-        }
-
+        const findAndSelectProblem = async (searchText) => {
+            if (!searchText) {
+                return false;
+            }
+            log(`Buscando Etiqueta Externa: '${searchText}'`);
+            await h.click(SELECTORS.PROBLEM_SELECT, true);
+            await h.type(SELECTORS.PROBLEM_SELECT, searchText, true);
+            await h.wait(TIMING.FILTER_WAIT);
+            
+            const problemOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+            const problemOptions = [];
+            for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
+                problemOptions.push(problemOptionsNodeList.snapshotItem(i));
+            }
+    
+            const normalizedSearchText = normalizeText(searchText);
+            const matchedProblemOption = problemOptions.find(opt => normalizeText(opt.textContent).startsWith(normalizedSearchText));
+    
+            if (matchedProblemOption) {
+                const selectedProblemText = matchedProblemOption.textContent.trim();
+                log(`Etiqueta Externa encontrada e selecionada: '${selectedProblemText}'`, 'success');
+                matchedProblemOption.click();
+                await h.wait(TIMING.CLICK_WAIT);
+                return selectedProblemText;
+            }
+            log(`Nenhuma Etiqueta Externa encontrada para '${searchText}'`, 'wait');
+            return null;
+        };
+        
         log("Iniciando fluxo de encaminhamento externo.");
         await h.click(SELECTORS.FORWARD_BUTTON);
         await h.wait(TIMING.ANIMATION_DURATION + 200);
@@ -931,28 +950,19 @@
         sectorOption.click();
         await h.wait(TIMING.CLICK_WAIT);
 
-        log(`Buscando Etiqueta Externa: '${etiquetaExternaSearchText}'`);
-        await h.click(SELECTORS.PROBLEM_SELECT, true);
-        await h.type(SELECTORS.PROBLEM_SELECT, etiquetaExternaSearchText, true);
-        await h.wait(TIMING.FILTER_WAIT);
-        
-        const problemOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        const problemOptions = [];
-        for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
-            problemOptions.push(problemOptionsNodeList.snapshotItem(i));
+        let selectedProblemText;
+        if (useFallback) {
+            selectedProblemText = await findAndSelectProblem(selectedItem.etiquetaExternaFallback);
+            if (!selectedProblemText) throw new Error("Não foi possível encontrar a etiqueta externa de fallback.");
+        } else {
+            selectedProblemText = await findAndSelectProblem(selectedItem.etiquetaExterna);
+            if (!selectedProblemText) {
+                log("Etiqueta externa principal não encontrada, tentando fallback.", 'wait');
+                await h.click(SELECTORS.PROBLEM_SELECT, true); // Close and reopen dropdown
+                selectedProblemText = await findAndSelectProblem(selectedItem.etiquetaExternaFallback);
+                if (!selectedProblemText) throw new Error("Não foi possível encontrar a etiqueta externa principal nem a de fallback.");
+            }
         }
-
-        const normalizedSearchText = normalizeText(etiquetaExternaSearchText);
-        const matchedProblemOption = problemOptions.find(opt => normalizeText(opt.textContent).startsWith(normalizedSearchText));
-
-        if (!matchedProblemOption) {
-            throw new Error(`Nenhuma Etiqueta Externa encontrada para '${etiquetaExternaSearchText}'`);
-        }
-
-        const selectedProblemText = matchedProblemOption.textContent.trim();
-        log(`Etiqueta Externa encontrada e selecionada: '${selectedProblemText}'`, 'success');
-        matchedProblemOption.click();
-        await h.wait(TIMING.CLICK_WAIT);
 
         const isMpcRequired = normalizeText(selectedProblemText).includes("mpc");
         log(`Verificação MPC: ${isMpcRequired ? 'OBRIGATÓRIO' : 'NÃO OBRIGATÓRIO'}`);
@@ -979,8 +989,6 @@
                 serviceToSelect = normalizeText("reparo mpc");
             } else {
                 log("Serviço 'reparo mpc' não encontrado. Selecionando a primeira opção disponível.", 'wait');
-                await h.type(SELECTORS.SERVICE_SELECT, '', true); 
-                await h.wait(TIMING.CLICK_WAIT);
                 const firstOption = await h.find(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li[1]`, true);
                 if (firstOption) {
                     firstOption.click();
@@ -1088,8 +1096,8 @@
         },
       };
       
-      const handleNzSelectStrict = async ({ inputSelector, valueToType, optionText }) => {
-        log(`Iniciando seleção estrita em dropdown. Opção: '${optionText}'`);
+      const handleNzSelectPrefix = async ({ inputSelector, valueToType }) => {
+        log(`Iniciando seleção por prefixo. Buscando por: '${valueToType}'`);
       
         if (!(await h.click(inputSelector, true))) {
           throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
@@ -1101,33 +1109,33 @@
         }
       
         if (valueToType) {
-          if (!(await h.type(inputSelector, valueToType, true))) {
-            throw new Error(`Não foi possível digitar em: ${inputSelector}`);
+            if (!(await h.type(inputSelector, valueToType, true))) {
+              throw new Error(`Não foi possível digitar em: ${inputSelector}`);
+            }
+            await h.wait(TIMING.FILTER_WAIT);
           }
-          await h.wait(TIMING.FILTER_WAIT);
-        }
       
-        const normalizedOptionText = normalizeText(optionText);
+        const normalizedSearchText = normalizeText(valueToType);
         const optionsNodeList = document.evaluate(".//li[contains(@class, 'ant-select-dropdown-menu-item')]", dropdownMenu, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         
         let foundOption = null;
         for (let i = 0; i < optionsNodeList.snapshotLength; i++) {
             const optionElement = optionsNodeList.snapshotItem(i);
-            const currentOptionText = normalizeText(optionElement.innerText); 
+            const currentOptionText = normalizeText(optionElement.innerText);
       
-            if (currentOptionText === normalizedOptionText) {
-                log(`Correspondência exata encontrada: '${currentOptionText}'`, 'success');
+            if (currentOptionText.startsWith(normalizedSearchText)) {
+                log(`Correspondência de prefixo encontrada: '${currentOptionText}'`, 'success');
                 foundOption = optionElement;
-                break;
+                break; 
             }
         }
       
         if (foundOption) {
             foundOption.click();
             await h.wait(TIMING.CLICK_WAIT);
-            log(`Seleção estrita da opção '${optionText}' concluída.`, 'success');
+            log(`Seleção por prefixo da opção '${valueToType}' concluída.`, 'success');
         } else {
-            throw new Error(`Não foi possível encontrar a opção exata: ${optionText}`);
+            throw new Error(`Não foi possível encontrar uma opção com o prefixo: ${valueToType}`);
         }
       };
 
@@ -1156,18 +1164,15 @@
         };
         automationTasks.push(sendMessageTask());
         
-        const etiquetaInterna = useFallback
-            ? this.selectedItem.etiquetaInternaFallback
-            : this.selectedItem.etiquetaInterna;
+        const etiquetaInterna = this.selectedItem.etiquetaInterna;
 
         if (etiquetaInterna) {
           const addInternalTagTask = async () => {
             log("Sub-tarefa: Aplicar tag interna.");
             if (await h.click(SELECTORS.TAG_ADD_BUTTON, true)) {
-              await handleNzSelectStrict({
+              await handleNzSelectPrefix({
                 inputSelector: SELECTORS.TAG_INPUT,
-                valueToType: etiquetaInterna,
-                optionText: etiquetaInterna,
+                valueToType: etiquetaInterna
               });
               await h.click("[data-testid='btn-Concluir']");
             } else {
