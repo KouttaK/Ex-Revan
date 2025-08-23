@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Máscara de Atendimento v4.8
 // @namespace    http://tampermonkey.net/
-// @version      5.6
+// @version      5.7
 // @description  Sistema de automação com lógica de seleção aprimorada, busca flexível e novas regras de prioridade.
 // @author       KoutaK
 // @match        *://*/* // IMPORTANTE: Substitua pelo domínio específico do sistema
@@ -38,12 +38,12 @@
     },
     TIMING: {
       DEFAULT_WAIT: 500,
-      ELEMENT_TIMEOUT: 5000,
+      ELEMENT_TIMEOUT: 10000, // Aumentado para dar mais tempo aos processos
       CLICK_WAIT: 300,
       TYPE_WAIT: 200,
       ANIMATION_DURATION: 400,
       TOAST_DURATION: 4000,
-      FILTER_WAIT: 400,
+      POLL_INTERVAL: 250, // Intervalo para checagens de atualização da UI
     },
     UI: { MODAL_MAX_HEIGHT: "85vh" },
   };
@@ -93,10 +93,10 @@
               return element;
             }
         }
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, CONFIG.TIMING.POLL_INTERVAL));
       } catch (err) {
         log(`Erro ao verificar elemento: ${err.message}`, 'error');
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, CONFIG.TIMING.POLL_INTERVAL));
       }
     }
     log(`Timeout: Elemento não habilitado após ${timeout}ms: '${selector}'`, 'error');
@@ -903,30 +903,40 @@
 
         const findAndSelectProblem = async (searchText) => {
             if (!searchText) {
-                return false;
+                return null;
             }
             log(`Buscando Etiqueta Externa: '${searchText}'`);
             await h.click(SELECTORS.PROBLEM_SELECT, true);
+            await h.type(SELECTORS.PROBLEM_SELECT, "", true); 
             await h.type(SELECTORS.PROBLEM_SELECT, searchText, true);
-            await h.wait(TIMING.FILTER_WAIT);
-            
-            const problemOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-            const problemOptions = [];
-            for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
-                problemOptions.push(problemOptionsNodeList.snapshotItem(i));
+        
+            const startTime = Date.now();
+            while (Date.now() - startTime < TIMING.ELEMENT_TIMEOUT) {
+                const dropdownMenu = await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true, 250);
+                if (dropdownMenu) {
+                    const problemOptionsNodeList = document.evaluate(`.//li[not(contains(@class, 'ant-select-dropdown-menu-item-disabled'))]`, dropdownMenu, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                    const problemOptions = [];
+                    for (let i = 0; i < problemOptionsNodeList.snapshotLength; i++) {
+                        problemOptions.push(problemOptionsNodeList.snapshotItem(i));
+                    }
+        
+                    const normalizedSearchText = normalizeText(searchText);
+                    const matchedProblemOption = problemOptions.find(opt => normalizeText(opt.textContent).startsWith(normalizedSearchText));
+        
+                    if (matchedProblemOption) {
+                        const selectedProblemText = matchedProblemOption.textContent.trim();
+                        log(`Etiqueta Externa encontrada e selecionada: '${selectedProblemText}'`, 'success');
+                        matchedProblemOption.click();
+                        await h.wait(TIMING.CLICK_WAIT);
+                        return selectedProblemText;
+                    }
+                }
+                await h.wait(CONFIG.TIMING.POLL_INTERVAL);
             }
-    
-            const normalizedSearchText = normalizeText(searchText);
-            const matchedProblemOption = problemOptions.find(opt => normalizeText(opt.textContent).startsWith(normalizedSearchText));
-    
-            if (matchedProblemOption) {
-                const selectedProblemText = matchedProblemOption.textContent.trim();
-                log(`Etiqueta Externa encontrada e selecionada: '${selectedProblemText}'`, 'success');
-                matchedProblemOption.click();
-                await h.wait(TIMING.CLICK_WAIT);
-                return selectedProblemText;
-            }
-            log(`Nenhuma Etiqueta Externa encontrada para '${searchText}'`, 'wait');
+        
+            log(`Timeout ou nenhuma Etiqueta Externa encontrada para '${searchText}'`, 'wait');
+            const body = await h.find('body');
+            if (body) body.click(); // Close dropdown
             return null;
         };
         
@@ -972,7 +982,7 @@
         if (!serviceElement) throw new Error("Campo de serviço não foi habilitado.");
 
         await h.click(SELECTORS.SERVICE_SELECT, true);
-        await h.wait(TIMING.FILTER_WAIT);
+        await h.wait(TIMING.POLL_INTERVAL);
 
         const serviceOptionsNodeList = document.evaluate(`${SELECTORS.GENERIC_DROPDOWN_MENU}//li`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         const serviceOptions = [];
@@ -1098,45 +1108,47 @@
       
       const handleNzSelectPrefix = async ({ inputSelector, valueToType }) => {
         log(`Iniciando seleção por prefixo. Buscando por: '${valueToType}'`);
-      
+    
         if (!(await h.click(inputSelector, true))) {
-          throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
+            throw new Error(`Não foi possível clicar no input do select: ${inputSelector}`);
         }
-      
-        const dropdownMenu = await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true);
-        if (!dropdownMenu) {
-          throw new Error("Dropdown do select não apareceu.");
-        }
-      
+    
         if (valueToType) {
             if (!(await h.type(inputSelector, valueToType, true))) {
-              throw new Error(`Não foi possível digitar em: ${inputSelector}`);
-            }
-            await h.wait(TIMING.FILTER_WAIT);
-          }
-      
-        const normalizedSearchText = normalizeText(valueToType);
-        const optionsNodeList = document.evaluate(".//li[contains(@class, 'ant-select-dropdown-menu-item')]", dropdownMenu, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-        
-        let foundOption = null;
-        for (let i = 0; i < optionsNodeList.snapshotLength; i++) {
-            const optionElement = optionsNodeList.snapshotItem(i);
-            const currentOptionText = normalizeText(optionElement.textContent);
-      
-            if (currentOptionText.startsWith(normalizedSearchText)) {
-                log(`Correspondência de prefixo encontrada: '${currentOptionText}'`, 'success');
-                foundOption = optionElement;
-                break; 
+                throw new Error(`Não foi possível digitar em: ${inputSelector}`);
             }
         }
-      
-        if (foundOption) {
-            foundOption.click();
-            await h.wait(TIMING.CLICK_WAIT);
-            log(`Seleção por prefixo da opção '${valueToType}' concluída.`, 'success');
-        } else {
-            throw new Error(`Não foi possível encontrar uma opção com o prefixo: ${valueToType}`);
+    
+        const startTime = Date.now();
+        while (Date.now() - startTime < TIMING.ELEMENT_TIMEOUT) {
+            const dropdownMenu = await h.find(SELECTORS.GENERIC_DROPDOWN_MENU, true, 250);
+            if (dropdownMenu) {
+                const normalizedSearchText = normalizeText(valueToType);
+                const optionsNodeList = document.evaluate(".//li[contains(@class, 'ant-select-dropdown-menu-item')]", dropdownMenu, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    
+                let foundOption = null;
+                for (let i = 0; i < optionsNodeList.snapshotLength; i++) {
+                    const optionElement = optionsNodeList.snapshotItem(i);
+                    const currentOptionText = normalizeText(optionElement.textContent);
+    
+                    if (currentOptionText.startsWith(normalizedSearchText)) {
+                        log(`Correspondência de prefixo encontrada: '${currentOptionText}'`, 'success');
+                        foundOption = optionElement;
+                        break;
+                    }
+                }
+    
+                if (foundOption) {
+                    foundOption.click();
+                    await h.wait(TIMING.CLICK_WAIT);
+                    log(`Seleção por prefixo da opção '${valueToType}' concluída.`, 'success');
+                    return;
+                }
+            }
+            await h.wait(CONFIG.TIMING.POLL_INTERVAL);
         }
+    
+        throw new Error(`Não foi possível encontrar uma opção com o prefixo: ${valueToType} após ${TIMING.ELEMENT_TIMEOUT}ms`);
       };
 
       try {
